@@ -262,6 +262,10 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
                 src={activity.metadata.imageUrl}
                 alt="Project preview"
                 className="w-full h-44 object-cover rounded-lg border border-slate-200"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Image+Not+Found';
+                }}
               />
             )}
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -317,6 +321,10 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
                         ? 'row-span-2 h-full' 
                         : 'h-48'
                     }`}
+                    onError={(e) => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Image+Not+Found';
+                    }}
                   />
                 ))}
               </div>
@@ -325,6 +333,10 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
                 src={activity.metadata?.imageUrl}
                 alt="Activity image"
                 className="w-full max-h-72 object-cover"
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Image+Not+Found';
+                }}
               />
             )}
           </div>

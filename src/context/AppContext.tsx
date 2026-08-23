@@ -26,6 +26,7 @@ import { INITIAL_CONVERSATIONS } from '../mock/messages';
 import { INITIAL_COMMUNITIES } from '../mock/communities';
 import { useAuth } from './AuthContext';
 import { api } from '../services/api';
+import { socket } from '../services/socket';
 
 interface AutomationPayload {
   title: string;
@@ -99,9 +100,12 @@ interface AppContextType {
   settings: AppSettings;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   
-  // Global Toast
   toastMessage: string | null;
   showToast: (msg: string) => void;
+
+  // New Features
+  createEvent: (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => void;
+  toggleFollowEducator: (educatorId: string) => void;
 }
 
 const DEFAULT_SETTINGS: AppSettings = {
@@ -220,6 +224,52 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   // Load data from the backend
   useEffect(() => {
     if (currentUserProfile) {
+      socket.connect();
+      
+      const onActivityLiked = (data: { activityId: string, likesCount: number, likedBy: string[] }) => {
+        setActivities(prev => prev.map(act => {
+          if (act.id === data.activityId) {
+            return {
+              ...act,
+              likesCount: data.likesCount,
+              isLiked: data.likedBy.includes(currentUserProfile.uid || currentUserProfile.id || '')
+            };
+          }
+          return act;
+        }));
+      };
+
+      const onActivityCommented = (data: { activityId: string, comment: any, commentsCount: number }) => {
+        setActivities(prev => prev.map(act => {
+          if (act.id === data.activityId) {
+            return {
+              ...act,
+              commentsCount: data.commentsCount,
+              comments: [...(act.comments || []), data.comment]
+            };
+          }
+          return act;
+        }));
+      };
+
+      socket.on('activity_liked', onActivityLiked);
+      socket.on('activity_commented', onActivityCommented);
+
+      const onNewEventNotification = (eventData: any) => {
+        setNotifications(prev => [{
+          id: `notif_${Date.now()}_${Math.random()}`,
+          type: 'event',
+          title: `New Event Added: ${eventData.title}`,
+          message: `Hosted by ${eventData.speaker?.name || 'Educator'}`,
+          timestamp: 'Just now',
+          isRead: false,
+          link: '/events',
+          badgeIcon: 'calendar'
+        }, ...prev]);
+        setEvents(prev => [eventData, ...prev]);
+      };
+      socket.on('new_event_notification', onNewEventNotification);
+
       api.get('/courses')
         .then(res => {
           const backendCourses = res.data.map((c: any) => ({
@@ -295,7 +345,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             commentsCount: act.commentsCount || 0,
             sharesCount: act.sharesCount || 0,
             comments: act.comments || [],
-            isLiked: false,
+            isLiked: act.likedBy ? act.likedBy.includes(currentUserProfile.uid || currentUserProfile.id || '') : false,
             isSaved: false,
             createdAt: act.createdAt
           }));
@@ -308,6 +358,19 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           });
         })
         .catch(err => console.error('Failed to load activities from API:', err));
+
+      api.get('/profile/network/recommendations')
+        .then(res => {
+           setConnections(res.data);
+        })
+        .catch(err => console.error('Failed to load peer network:', err));
+
+      return () => {
+        socket.off('activity_liked', onActivityLiked);
+        socket.off('activity_commented', onActivityCommented);
+        socket.off('new_event_notification');
+        socket.disconnect();
+      };
     }
   }, [currentUserProfile, currentUser.name]);
 
@@ -586,7 +649,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }
   };
 
-  const toggleLikeActivity = (activityId: string) => {
+  const toggleLikeActivity = async (activityId: string) => {
+    // Optimistic update
     setActivities(prev => prev.map(act => {
       if (act.id === activityId) {
         const isLiked = !act.isLiked;
@@ -598,9 +662,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return act;
     }));
+
+    try {
+      if (!activityId.startsWith('act_')) {
+        await api.post(`/activities/${activityId}/like`);
+      }
+    } catch (err) {
+      console.error('Failed to like activity:', err);
+    }
   };
 
-  const addCommentToActivity = (activityId: string, text: string) => {
+  const addCommentToActivity = async (activityId: string, text: string) => {
     if (!text.trim()) return;
     const newComment = {
       id: `c_${Date.now()}`,
@@ -614,6 +686,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       likes: 0
     };
 
+    // Optimistic update
     setActivities(prev => prev.map(act => {
       if (act.id === activityId) {
         return {
@@ -624,6 +697,14 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return act;
     }));
+
+    try {
+      if (!activityId.startsWith('act_')) {
+        await api.post(`/activities/${activityId}/comment`, { text: text.trim() });
+      }
+    } catch (err) {
+      console.error('Failed to post comment:', err);
+    }
   };
 
   const toggleSaveActivity = (activityId: string) => {
@@ -765,7 +846,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     setEvents(prev => prev.map(ev => {
       if (ev.id === eventId) {
         const isRegistered = !ev.isRegistered;
-        showToast(isRegistered ? `Registered for ${ev.title}! Calendar invite generated.` : `Cancelled registration for ${ev.title}`);
+        if (isRegistered) {
+          showToast(`Successfully registered for ${ev.title}`);
+        } else {
+          showToast(`Registration cancelled for ${ev.title}`);
+        }
         return {
           ...ev,
           isRegistered,
@@ -776,12 +861,42 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     }));
   };
 
+  const createEvent = (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => {
+    const newEvent: EventItem = {
+      ...eventData,
+      id: `ev_${Date.now()}`,
+      registeredCount: 0,
+      isRegistered: false
+    };
+    // Emit real-time notification
+    socket.emit('create_event', newEvent);
+    
+    setEvents(prev => [newEvent, ...prev]);
+    showToast('Event created successfully and broadcasted globally!');
+  };
+
+  const toggleFollowEducator = (educatorId: string) => {
+    const isFollowing = currentUser.followingEducators?.includes(educatorId);
+    
+    updateCurrentUser({
+      followingEducators: isFollowing 
+        ? currentUser.followingEducators?.filter(id => id !== educatorId)
+        : [...(currentUser.followingEducators || []), educatorId]
+    });
+    
+    if (isFollowing) {
+      showToast('Unfollowed educator.');
+    } else {
+      showToast('You are now following this educator!');
+    }
+  };
+
   // Network
-  const toggleConnectionStatus = (connectionId: string) => {
+  const toggleConnectionStatus = async (connectionId: string) => {
     setConnections(prev => prev.map(conn => {
       if (conn.id === connectionId) {
         let newStatus: 'none' | 'pending' | 'connected' | 'received' = 'none';
-        if (conn.status === 'none') {
+        if (conn.status === 'none' || conn.status === 'connect') {
           newStatus = 'pending';
           showToast(`Connection request sent to ${conn.name}`);
         } else if (conn.status === 'pending') {
@@ -798,6 +913,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       }
       return conn;
     }));
+
+    try {
+      await api.post('/profiles/network/connect', { targetUserId: connectionId });
+    } catch (err) {
+      console.error('Failed to send connection request:', err);
+    }
   };
 
   // Notifications
@@ -911,7 +1032,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         settings,
         updateSettings,
         toastMessage,
-        showToast
+        showToast,
+        createEvent,
+        toggleFollowEducator
       }}
     >
       {children}

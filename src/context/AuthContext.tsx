@@ -13,6 +13,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  mockEducatorLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -24,6 +25,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   logout: async () => {},
   refreshProfile: async () => {},
+  mockEducatorLogin: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -33,13 +35,54 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUserProfile, setCurrentUserProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // New mock login function
+  const mockEducatorLogin = () => {
+    const mockProfile: StudentProfile = {
+      id: 'mock_educator_jayamurugan',
+      name: 'Dr. Jayamurugan',
+      headline: 'Senior Educator & AI Specialist',
+      college: 'THENAM Campus',
+      department: 'Computer Science',
+      yearOfStudy: 'Faculty',
+      location: 'Chennai, India',
+      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      coverImage: '',
+      bio: 'Educator shaping the future of AI.',
+      email: 'jayamurugan@thenam.edu',
+      skills: ['Machine Learning', 'AI', 'Mentorship'],
+      interests: [],
+      metrics: {
+        coursesCompleted: 0,
+        certificatesCount: 0,
+        projectsCount: 0,
+        networkCount: 0,
+        xpPoints: 0,
+        streakDays: 0,
+        globalRank: 1
+      },
+      journey: [],
+      role: 'faculty',
+      profileCompleted: true
+    };
+    localStorage.setItem('mockEducator', JSON.stringify(mockProfile));
+    setCurrentUserProfile(mockProfile);
+  };
+
   useEffect(() => {
+    const mockUser = localStorage.getItem('mockEducator');
+    if (mockUser) {
+      setCurrentUserProfile(JSON.parse(mockUser));
+      setLoading(false);
+      return; // Skip Firebase auth sync
+    }
+
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setFirebaseUser(user);
       if (user) {
         try {
           // Sync account state and fetch backend user profile
-          const res = await api.post('/auth/sync');
+          const intendedRole = localStorage.getItem('intendedRole');
+          const res = await api.post('/auth/sync', { role: intendedRole || 'student' });
           setCurrentUserProfile(res.data);
         } catch (error) {
           console.error('Failed to sync/load user profile from backend API:', error);
@@ -63,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const handleSignOut = async () => {
+    localStorage.removeItem('mockEducator');
     try {
       await api.post('/auth/logout').catch(() => {});
       await firebaseSignOut(auth);
@@ -95,6 +139,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signOut: handleSignOut,
         logout: handleSignOut,
         refreshProfile,
+        mockEducatorLogin
       }}
     >
       {children}

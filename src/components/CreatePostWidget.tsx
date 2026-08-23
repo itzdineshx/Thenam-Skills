@@ -62,8 +62,17 @@ export const CreatePostWidget: React.FC = () => {
 
     try {
       // In a real app, upload images to Firebase Storage and get URLs here
-      // For simulation, we create object URLs
-      const imageUrls = images.map(img => URL.createObjectURL(img));
+      // For simulation, we convert them to base64 Data URLs so they persist
+      const imageUrls = await Promise.all(
+        images.map((img) => {
+          return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onloadend = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(img);
+          });
+        })
+      );
 
       createActivity({
         type: 'student_post',

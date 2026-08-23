@@ -12,17 +12,20 @@ import {
   Share2,
   ArrowRight,
   Search,
-  Filter
+  Filter,
+  Plus
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
+import { CreateEventModal } from '../components/CreateEventModal';
 
 export const EventsPage: React.FC = () => {
-  const { events, toggleEventRegistration, showToast } = useApp();
+  const { currentUser, events, toggleEventRegistration, toggleFollowEducator, showToast } = useApp();
   const { navigate } = useRouter();
 
   const [activeTypeFilter, setActiveTypeFilter] = useState<'all' | 'workshop' | 'webinar' | 'hackathon'>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const filteredEvents = events.filter(e => {
     const matchesType = activeTypeFilter === 'all' || e.type === activeTypeFilter;
@@ -52,11 +55,20 @@ export const EventsPage: React.FC = () => {
         </div>
 
         <div className="flex items-center gap-3">
-          <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-center">
+          {currentUser.role === 'faculty' && (
+            <button
+              onClick={() => setIsCreateModalOpen(true)}
+              className="bg-purple-600 hover:bg-purple-700 text-white px-5 py-3 rounded-2xl font-bold text-sm shadow-md transition-all flex items-center gap-2"
+            >
+              <Plus className="w-5 h-5" />
+              Add New Event
+            </button>
+          )}
+          <div className="hidden sm:block bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-center">
             <span className="text-2xl font-black text-purple-400">3</span>
             <span className="text-[10px] text-slate-300 block font-medium">This Month</span>
           </div>
-          <div className="bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-center">
+          <div className="hidden sm:block bg-white/10 backdrop-blur-md px-5 py-3 rounded-2xl border border-white/10 text-center">
             <span className="text-2xl font-black text-emerald-400">100%</span>
             <span className="text-[10px] text-slate-300 block font-medium">Free for Students</span>
           </div>
@@ -151,16 +163,30 @@ export const EventsPage: React.FC = () => {
                   </p>
 
                   {/* Speaker */}
-                  <div className="flex items-center gap-2.5 pt-2 border-t border-slate-100">
-                    <img
-                      src={ev.speaker.avatar}
-                      alt={ev.speaker.name}
-                      className="w-8 h-8 rounded-full object-cover border border-slate-200"
-                    />
-                    <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-900 truncate">{ev.speaker.name}</p>
-                      <p className="text-[10px] text-slate-500 truncate">{ev.speaker.role} • {ev.speaker.company}</p>
+                  <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+                    <div className="flex items-center gap-2.5">
+                      <img
+                        src={ev.speaker.avatar}
+                        alt={ev.speaker.name}
+                        className="w-8 h-8 rounded-full object-cover border border-slate-200"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold text-slate-900 truncate">{ev.speaker.name}</p>
+                        <p className="text-[10px] text-slate-500 truncate">{ev.speaker.role} • {ev.speaker.company}</p>
+                      </div>
                     </div>
+                    {currentUser.role === 'student' && ev.speaker.name !== currentUser.name && (
+                      <button
+                        onClick={() => toggleFollowEducator(ev.speaker.name)}
+                        className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${
+                          currentUser.followingEducators?.includes(ev.speaker.name)
+                            ? 'bg-slate-100 text-slate-600 border border-slate-200'
+                            : 'bg-indigo-50 text-indigo-600 border border-indigo-200 hover:bg-indigo-100'
+                        }`}
+                      >
+                        {currentUser.followingEducators?.includes(ev.speaker.name) ? 'Following' : 'Follow'}
+                      </button>
+                    )}
                   </div>
 
                   <div className="flex items-center justify-between text-xs text-slate-500 pt-1">
@@ -201,6 +227,7 @@ export const EventsPage: React.FC = () => {
           );
         })}
       </div>
+      <CreateEventModal isOpen={isCreateModalOpen} onClose={() => setIsCreateModalOpen(false)} />
     </div>
   );
 };

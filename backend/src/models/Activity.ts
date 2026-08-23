@@ -6,6 +6,8 @@ export interface IActivity {
   description: string;
   metadata: Record<string, any>;
   createdAt?: any;
+  likedBy?: string[];
+  comments?: any[];
 }
 
 export type Activity = IActivity;

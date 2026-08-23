@@ -21,11 +21,13 @@ import {
   Menu,
   X,
   ExternalLink,
-  Layers
+  Layers,
+  Link
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
 import { useAuth } from '../context/AuthContext';
+import { BondBar } from './BondBar';
 
 export const Navbar: React.FC = () => {
   const {
@@ -44,6 +46,7 @@ export const Navbar: React.FC = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isBondBarOpen, setIsBondBarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
 
   const profileRef = useRef<HTMLDivElement>(null);
@@ -155,16 +158,16 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             
 
-            {/* Messages */}
+            {/* Bond Network */}
             <button
-              id="navbar-messages-btn"
-              onClick={() => navigate('/messages')}
+              id="navbar-bond-btn"
+              onClick={() => navigate('/bond')}
               className={`relative p-2 rounded-lg transition-colors ${
-                currentPath === '/messages' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                currentPath === '/bond' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
               }`}
-              title="Messages"
+              title="Campus Bond"
             >
-              <MessageSquare className="w-5 h-5" />
+              <Link className="w-5 h-5" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
             </button>
 
@@ -289,9 +292,14 @@ export const Navbar: React.FC = () => {
                         className="w-11 h-11 rounded-full object-cover border border-indigo-200"
                       />
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-1.5">
+                        <div className="flex items-center gap-1.5 flex-wrap">
                           <h4 className="text-sm font-bold text-slate-900 truncate">{currentUser.name}</h4>
                           <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                          {currentUser.role === 'faculty' && (
+                            <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Educator
+                            </span>
+                          )}
                         </div>
                         <p className="text-xs text-slate-500 truncate">{currentUser.headline}</p>
                         <p className="text-[11px] text-indigo-600 font-semibold truncate">{currentUser.college}</p>

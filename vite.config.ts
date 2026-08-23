@@ -15,9 +15,6 @@ export default defineConfig(() => {
       host: "localhost",
       port: 3001,
       strictPort: true,
-      headers: {
-        'Cross-Origin-Opener-Policy': 'same-origin-allow-popups'
-      },
       // HMR is disabled in AI Studio via DISABLE_HMR env var.
       hmr: process.env.DISABLE_HMR === 'true' ? false : {
         protocol: "ws",

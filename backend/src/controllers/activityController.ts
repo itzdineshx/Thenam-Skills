@@ -106,3 +106,98 @@ export const deleteActivity = asyncHandler(async (req: any, res: Response) => {
 
   return sendResponse(res, 200, true, 'Activity deleted successfully.');
 });
+
+// POST /api/activities/:id/like
+export const toggleLikeActivity = asyncHandler(async (req: any, res: Response) => {
+  const db = admin.firestore();
+  const uid = req.user?.firebaseUid || req.user?.id;
+  const activityId = req.params.id;
+
+  if (!uid) {
+    return sendResponse(res, 401, false, 'Unauthorized');
+  }
+
+  const docRef = db.collection('activities').doc(activityId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    return sendResponse(res, 404, false, 'Activity not found');
+  }
+
+  const data = doc.data() || {};
+  let likedBy = data.likedBy || [];
+  
+  const hasLiked = likedBy.includes(uid);
+  if (hasLiked) {
+    likedBy = likedBy.filter((id: string) => id !== uid);
+  } else {
+    likedBy.push(uid);
+  }
+  
+  const likesCount = likedBy.length;
+  await docRef.update({ likedBy, likesCount });
+  
+  try {
+    const { io } = require('../server');
+    io.emit('activity_liked', { activityId, likesCount, likedBy });
+  } catch (err) {
+    console.error('Socket io emit error', err);
+  }
+
+  return sendResponse(res, 200, true, 'Like toggled successfully', { likesCount, likedBy, hasLiked: !hasLiked });
+});
+
+// POST /api/activities/:id/comment
+export const commentActivity = asyncHandler(async (req: any, res: Response) => {
+  const db = admin.firestore();
+  const uid = req.user?.firebaseUid || req.user?.id;
+  const activityId = req.params.id;
+  const { text } = req.body;
+
+  if (!uid) {
+    return sendResponse(res, 401, false, 'Unauthorized');
+  }
+  if (!text) {
+    return sendResponse(res, 400, false, 'Comment text is required');
+  }
+
+  const docRef = db.collection('activities').doc(activityId);
+  const doc = await docRef.get();
+
+  if (!doc.exists) {
+    return sendResponse(res, 404, false, 'Activity not found');
+  }
+
+  const data = doc.data() || {};
+  const comments = data.comments || [];
+  
+  // Get user info for real-time broadcast payload
+  const userDoc = await db.collection('users').doc(uid).get();
+  const userData = userDoc.data() || {};
+  
+  const newComment = {
+    id: `c_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    text,
+    userId: uid,
+    timestamp: new Date().toISOString(),
+    author: {
+      name: userData.name || 'Google User',
+      avatar: userData.photoURL || '',
+      headline: userData.department || ''
+    }
+  };
+  
+  comments.push(newComment);
+  const commentsCount = comments.length;
+  
+  await docRef.update({ comments, commentsCount });
+  
+  try {
+    const { io } = require('../server');
+    io.emit('activity_commented', { activityId, comment: newComment, commentsCount });
+  } catch (err) {
+    console.error('Socket io emit error', err);
+  }
+
+  return sendResponse(res, 200, true, 'Comment added successfully', { comment: newComment, commentsCount });
+});

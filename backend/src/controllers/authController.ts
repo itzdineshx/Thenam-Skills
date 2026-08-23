@@ -19,13 +19,14 @@ export const syncUser = asyncHandler(async (req: AuthenticatedRequest, res: Resp
   let finalUser: any;
 
   if (!userDoc.exists) {
+    const intendedRole = req.body.role === 'faculty' ? 'faculty' : 'student';
     // 2. Provision new User document in Firestore
     finalUser = {
       firebaseUid: firebaseUser.firebaseUid,
       email: firebaseUser.email,
       name: firebaseUser.name,
       photoURL: firebaseUser.photoURL || '',
-      role: 'student',
+      role: intendedRole,
       profileCompleted: false,
       xp: 0,
       streak: 0,
@@ -48,12 +49,21 @@ export const syncUser = asyncHandler(async (req: AuthenticatedRequest, res: Resp
     finalUser = { id: userDoc.id, ...userDoc.data() };
     
     // Sync Google profile photo if Firestore photoURL is currently blank
+    const updates: any = {};
     if (!finalUser.photoURL && firebaseUser.photoURL) {
       finalUser.photoURL = firebaseUser.photoURL;
-      await userRef.update({ 
-        photoURL: firebaseUser.photoURL,
-        updatedAt: admin.firestore.Timestamp.now()
-      });
+      updates.photoURL = firebaseUser.photoURL;
+    }
+    
+    const intendedRole = req.body.role;
+    if (intendedRole && ['student', 'faculty'].includes(intendedRole) && finalUser.role !== intendedRole) {
+      finalUser.role = intendedRole;
+      updates.role = intendedRole;
+    }
+
+    if (Object.keys(updates).length > 0) {
+      updates.updatedAt = admin.firestore.Timestamp.now();
+      await userRef.update(updates);
     }
   }
 
