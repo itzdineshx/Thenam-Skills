@@ -9,8 +9,6 @@ import {
 import { db } from './config';
 import { StudentProfile } from '../types';
 
-
-
 const LOCAL_STORAGE_KEY_PREFIX = 'thenam_offline_user_';
 
 const getLocalFallback = (uid: string): any | null => {

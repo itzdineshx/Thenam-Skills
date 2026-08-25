@@ -14,7 +14,9 @@ import {
   ShieldCheck,
   Zap,
   ExternalLink,
-  ChevronRight
+  ChevronRight,
+  RefreshCw,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
@@ -22,6 +24,8 @@ import { LearningActivityCard } from '../components/LearningActivityCard';
 import { CreateActivityModal } from '../components/CreateActivityModal';
 import { CreatePostWidget } from '../components/CreatePostWidget';
 import { ActivityType } from '../types';
+import { collection, query, where, onSnapshot, addDoc, serverTimestamp, getDocs, limit } from 'firebase/firestore';
+import { db } from '../firebase/config';
 
 export const HomePage: React.FC = () => {
   const {
@@ -39,6 +43,88 @@ export const HomePage: React.FC = () => {
 
   const [activeFilter, setActiveFilter] = useState<'all' | ActivityType>('all');
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [bonds, setBonds] = useState<any[]>([]);
+  const [suggestedPeers, setSuggestedPeers] = useState<any[]>([]);
+  const [isRefreshingPeers, setIsRefreshingPeers] = useState(false);
+
+  const fetchSuggestedPeers = async () => {
+    if (!currentUser) return;
+    setIsRefreshingPeers(true);
+    try {
+      const usersSnap = await getDocs(query(collection(db, 'users'), limit(50)));
+      const allUsers = usersSnap.docs.map(d => ({ id: d.id, ...d.data() as any }));
+      
+      const bondedUserIds = new Set(
+        bonds.map(b => b.senderId === currentUser.id ? b.receiverId : b.senderId)
+      );
+
+      let potentialPeers = allUsers.filter(u => u.id !== currentUser.id && !bondedUserIds.has(u.id));
+
+      for (let i = potentialPeers.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [potentialPeers[i], potentialPeers[j]] = [potentialPeers[j], potentialPeers[i]];
+      }
+
+      setSuggestedPeers(potentialPeers.slice(0, 3));
+    } catch (err) {
+      console.error("Failed to fetch peers:", err);
+    } finally {
+      setIsRefreshingPeers(false);
+    }
+  };
+
+  React.useEffect(() => {
+    if (currentUser && suggestedPeers.length === 0) {
+      fetchSuggestedPeers();
+    }
+  }, [currentUser]);
+
+  // Real-time listener for bond requests
+  React.useEffect(() => {
+    if (!currentUser || !currentUser.id) return;
+    const qSender = query(collection(db, 'bonds'), where('senderId', '==', currentUser.id));
+    const qReceiver = query(collection(db, 'bonds'), where('receiverId', '==', currentUser.id));
+
+    const handleSnapshot = (snap: any) => {
+      setBonds(prev => {
+        const newBonds = [...prev];
+        snap.docChanges().forEach((change: any) => {
+          const data = { id: change.doc.id, ...change.doc.data() };
+          if (change.type === 'added' || change.type === 'modified') {
+            const idx = newBonds.findIndex(b => b.id === data.id);
+            if (idx > -1) newBonds[idx] = data;
+            else newBonds.push(data);
+          }
+          if (change.type === 'removed') {
+            const idx = newBonds.findIndex(b => b.id === data.id);
+            if (idx > -1) newBonds.splice(idx, 1);
+          }
+        });
+        return newBonds;
+      });
+    };
+
+    const unsubSender = onSnapshot(qSender, handleSnapshot);
+    const unsubReceiver = onSnapshot(qReceiver, handleSnapshot);
+
+    return () => {
+      unsubSender();
+      unsubReceiver();
+    };
+  }, [currentUser]);
+
+  const handleBondRequest = async (peerId: string) => {
+    try {
+      await addDoc(collection(db, 'bonds'), {
+        senderId: currentUser.id,
+        receiverId: peerId,
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+    } catch (error) {
+      console.error("Failed to send bond request", error);
+    }
+  };
 
   // Active in-progress course
   const activeCourse = courses.find(c => c.progress > 0 && c.progress < 100) || courses[0];
@@ -267,60 +353,70 @@ export const HomePage: React.FC = () => {
                 <Users className="w-4 h-4 text-indigo-600" />
                 <span>Peer Network</span>
               </h4>
-              <button onClick={() => navigate('/network')} className="text-xs text-indigo-600 font-bold hover:underline">
-                Explore
+              <button 
+                onClick={fetchSuggestedPeers} 
+                disabled={isRefreshingPeers}
+                className="text-[10px] text-slate-500 font-bold hover:text-indigo-600 flex items-center gap-1 transition-colors"
+              >
+                {isRefreshingPeers ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3" />}
+                Refresh
               </button>
             </div>
 
             <div className="space-y-3">
-              {suggestedPeople.map((person) => (
-                <div key={person.id} className="flex items-start justify-between gap-2 p-2 rounded-xl hover:bg-slate-50 transition-colors">
-                  <div
-                    onClick={() => navigate(`/profile/${person.id}`)}
-                    className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
-                  >
-                    <img
-                      src={person.avatar}
-                      alt={person.name}
-                      className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
-                    />
-                    <div className="min-w-0">
-                      <h5 className="text-xs font-bold text-slate-900 truncate hover:text-indigo-600">{person.name}</h5>
-                      <p className="text-[10px] text-slate-500 truncate">{person.headline}</p>
-                    </div>
-                  </div>
+              {suggestedPeers.map((person) => {
+                const existingBond = bonds.find(b => 
+                  (b.senderId === currentUser.id && b.receiverId === person.id) ||
+                  (b.receiverId === currentUser.id && b.senderId === person.id)
+                );
 
-                  <button
-                    onClick={() => toggleConnectionStatus(person.id)}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-colors ${
-                      person.status === 'pending'
-                        ? 'bg-slate-100 text-slate-600'
-                        : 'bg-indigo-50 text-indigo-700 hover:bg-indigo-100'
-                    }`}
-                  >
-                    {person.status === 'pending' ? 'Pending' : 'Connect'}
-                  </button>
-                </div>
-              ))}
+                let btnLabel = "Bond";
+                let btnDisabled = false;
+                let btnClasses = "bg-indigo-50 text-indigo-700 hover:bg-indigo-100";
+
+                if (existingBond) {
+                  if (existingBond.status === 'accepted') {
+                    btnLabel = "Connected";
+                    btnDisabled = true;
+                    btnClasses = "bg-emerald-50 text-emerald-700";
+                  } else if (existingBond.status === 'pending') {
+                    btnLabel = "Bonding...";
+                    btnDisabled = true;
+                    btnClasses = "bg-slate-100 text-slate-500";
+                  }
+                }
+
+                return (
+                  <div key={person.id} className="flex items-start justify-between gap-2 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+                    <div
+                      onClick={() => navigate(`/profile/${person.id}`)}
+                      className="flex items-center gap-2.5 cursor-pointer min-w-0 flex-1"
+                    >
+                      <img
+                        src={person.photoURL || person.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80'}
+                        alt={person.name}
+                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <h5 className="text-xs font-bold text-slate-900 truncate hover:text-indigo-600">{person.name}</h5>
+                        <p className="text-[10px] text-slate-500 truncate">{person.headline}</p>
+                      </div>
+                    </div>
+
+                    <button
+                      onClick={() => handleBondRequest(person.id)}
+                      disabled={btnDisabled}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-bold shrink-0 transition-colors ${btnClasses}`}
+                    >
+                      {btnLabel}
+                    </button>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
           {/* Verified Certificates Quick Link */}
-          <div className="bg-amber-50/80 border border-amber-200 rounded-3xl p-5 space-y-2 text-xs">
-            <div className="flex items-center gap-2 text-amber-900 font-bold">
-              <Award className="w-4 h-4 text-amber-600" />
-              <span>Verified Certificate Registry</span>
-            </div>
-            <p className="text-amber-800/90 leading-relaxed">
-              Every course completion at THENAM generates an immutable cryptographic credential hash.
-            </p>
-            <button
-              onClick={() => navigate('/certificates')}
-              className="text-xs font-bold text-amber-900 underline block pt-1"
-            >
-              Browse your {currentUser.metrics.certificatesCount} issued certificates →
-            </button>
-          </div>
         </aside>
       </div>
 

@@ -246,3 +246,54 @@ export const getPublicProfile = asyncHandler(async (req: AuthenticatedRequest, r
 
   return sendResponse(res, 200, true, 'Student portfolio retrieved successfully.', publicProfile);
 });
+
+// GET /api/profiles/network/recommendations
+export const getNetworkRecommendations = asyncHandler(async (req: any, res: Response) => {
+  const db = admin.firestore();
+  const uid = req.user?.firebaseUid || req.user?.id;
+
+  if (!uid) {
+    return sendResponse(res, 401, false, 'Unauthorized');
+  }
+
+  // Fetch all users (in a real app, use a query with limits and pagination)
+  const usersSnapshot = await db.collection('users').get();
+  
+  let users: any[] = [];
+  usersSnapshot.forEach(doc => {
+    if (doc.id !== uid) {
+      const data = doc.data();
+      users.push({
+        id: doc.id,
+        name: data.name || 'Student',
+        avatar: data.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+        headline: data.department ? `${data.department} Student` : 'Engineering Student',
+        status: 'connect' // default status
+      });
+    }
+  });
+
+  // Basic shuffling
+  users = users.sort(() => 0.5 - Math.random()).slice(0, 5);
+
+  return sendResponse(res, 200, true, 'Network recommendations retrieved successfully.', users);
+});
+
+// POST /api/profiles/network/connect
+export const connectUser = asyncHandler(async (req: any, res: Response) => {
+  const db = admin.firestore();
+  const uid = req.user?.firebaseUid || req.user?.id;
+  const { targetUserId } = req.body;
+
+  if (!uid) {
+    return sendResponse(res, 401, false, 'Unauthorized');
+  }
+  if (!targetUserId) {
+    return sendResponse(res, 400, false, 'Target user ID is required');
+  }
+
+  // For this mock implementation, we just return success
+  // In a real app, this would create a connection request document in a "connections" collection
+
+  return sendResponse(res, 200, true, 'Connection request sent successfully.');
+});

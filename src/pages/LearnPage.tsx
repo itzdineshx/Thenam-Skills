@@ -175,7 +175,7 @@ export const LearnPage: React.FC = () => {
               
               <div className="p-4 bg-slate-900/50 border-t border-slate-800">
                 <button className="w-full flex items-center justify-center gap-1.5 py-2.5 px-4 bg-indigo-600/10 hover:bg-indigo-600 text-indigo-400 hover:text-white text-xs font-bold rounded-xl border border-indigo-600/30 transition-colors">
-                  <span>View Details & Apply</span>
+                  <span>Announcing Soon</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </button>
               </div>
@@ -383,22 +383,20 @@ export const LearnPage: React.FC = () => {
                 </ul>
               </div>
               
-              {/* Pricing & CTA */}
-              <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 flex flex-col items-center gap-3">
-                <span className="bg-amber-500/20 text-amber-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-amber-500/30">
-                  Introductory Offer
+              {/* Announcing Soon State */}
+              <div className="bg-slate-900 rounded-2xl p-5 border border-slate-800 flex flex-col items-center gap-3 text-center">
+                <span className="bg-indigo-500/20 text-indigo-400 text-[10px] font-black uppercase tracking-widest px-2.5 py-1 rounded-md border border-indigo-500/30">
+                  Announcing Soon
                 </span>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-lg text-slate-500 line-through font-bold">₹2,999</span>
-                  <span className="text-4xl font-black text-white">₹699</span>
-                </div>
+                <p className="text-sm text-slate-300 font-medium my-1">
+                  Stay Tuned! Registrations will open shortly.
+                </p>
                 
                 <button
-                  onClick={() => alert('Payment gateway integration placeholder.')}
-                  className="w-full py-3.5 mt-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center justify-center gap-2"
+                  disabled
+                  className="w-full py-3.5 mt-2 bg-slate-800 text-slate-500 font-bold rounded-xl cursor-not-allowed transition-all flex items-center justify-center gap-2"
                 >
-                  Pay ₹699 to Unlock & Join
-                  <ArrowRight className="w-4 h-4" />
+                  Notify Me
                 </button>
               </div>
             </div>

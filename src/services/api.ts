@@ -8,7 +8,11 @@ async function request(path: string, options: RequestInit = {}) {
 
   // 1. Automatically fetch and inject Firebase ID JWT token if authenticated
   const currentUser = auth.currentUser;
-  if (currentUser) {
+  const mockUser = localStorage.getItem('mockEducator');
+  
+  if (mockUser) {
+    headers.set('Authorization', 'Bearer MOCK_EDUCATOR_TOKEN');
+  } else if (currentUser) {
     try {
       const token = await currentUser.getIdToken();
       headers.set('Authorization', `Bearer ${token}`);

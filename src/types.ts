@@ -49,6 +49,7 @@ export interface StudentProfile {
   preferredRoles?: string[];
   profileCompleted?: boolean;
   role?: UserRole;
+  followingEducators?: string[];
 }
 
 export interface JourneyMilestone {

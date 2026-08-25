@@ -22,8 +22,8 @@ import { TalentPage } from './pages/TalentPage';
 import { AchievementsPage } from './pages/AchievementsPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { NetworkPage } from './pages/NetworkPage';
-import { MessagesPage } from './pages/MessagesPage';
 import { NotificationsPage } from './pages/NotificationsPage';
+import { BondPage } from './pages/BondPage';
 import { SettingsPage } from './pages/SettingsPage';
 import { AdminPage } from './pages/AdminPage';
 import { OpeningSoonPage } from './pages/OpeningSoonPage';
@@ -59,7 +59,7 @@ const AppContent: React.FC = () => {
     );
   }
 
-  if (!user) {
+  if (!user && !currentUserProfile) {
     return <LoginPage />;
   }
 
@@ -105,11 +105,11 @@ const AppContent: React.FC = () => {
     if (path.startsWith('/network')) {
       return <NetworkPage />;
     }
+    if (path.startsWith('/bond')) {
+      return <BondPage />;
+    }
     if (path.startsWith('/profile')) {
       return <ProfilePage />;
-    }
-    if (path.startsWith('/messages')) {
-      return <MessagesPage />;
     }
     if (path.startsWith('/notifications')) {
       return <NotificationsPage />;
