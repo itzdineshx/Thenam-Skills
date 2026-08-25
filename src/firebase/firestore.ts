@@ -4,16 +4,10 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
-  Timestamp,
-  enableIndexedDbPersistence
+  Timestamp
 } from 'firebase/firestore';
 import { db } from './config';
 import { StudentProfile } from '../types';
-
-// Enable native Firebase IndexedDB offline persistence
-// enableIndexedDbPersistence(db).catch((err) => {
-//   console.warn('Firestore native offline persistence could not be enabled:', err.code);
-// });
 
 const LOCAL_STORAGE_KEY_PREFIX = 'thenam_offline_user_';
 
