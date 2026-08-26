@@ -5,7 +5,18 @@ import { useApp } from '../context/AppContext';
 export const CreatePostWidget: React.FC = () => {
   const { currentUser, createActivity } = useApp();
   const [content, setContent] = useState('');
-  const [images, setImages] = useState<File[]>([]);
+  const [images, setImages] = useState<{file: File, preview: string}[]>([]);
+  const imagesRef = useRef(images);
+  
+  React.useEffect(() => {
+    imagesRef.current = images;
+  }, [images]);
+
+  React.useEffect(() => {
+    return () => {
+      imagesRef.current.forEach(img => URL.revokeObjectURL(img.preview));
+    };
+  }, []);
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -30,7 +41,7 @@ export const CreatePostWidget: React.FC = () => {
     setError(null);
     if (!e.target.files) return;
     
-    const newFiles = Array.from(e.target.files);
+    const newFiles = Array.from(e.target.files) as File[];
     
     if (images.length + newFiles.length > maxImages) {
       setError(`You can only upload up to ${maxImages} images.`);
@@ -45,7 +56,11 @@ export const CreatePostWidget: React.FC = () => {
       return true;
     });
 
-    setImages(prev => [...prev, ...validFiles]);
+    const newImages = validFiles.map(file => ({
+      file,
+      preview: URL.createObjectURL(file)
+    }));
+    setImages(prev => [...prev, ...newImages]);
     
     // Reset file input
     if (fileInputRef.current) {
@@ -54,7 +69,12 @@ export const CreatePostWidget: React.FC = () => {
   };
 
   const removeImage = (indexToRemove: number) => {
-    setImages(images.filter((_, index) => index !== indexToRemove));
+    setImages(prev => {
+      const newImages = [...prev];
+      URL.revokeObjectURL(newImages[indexToRemove].preview);
+      newImages.splice(indexToRemove, 1);
+      return newImages;
+    });
   };
 
   const handlePost = async () => {
@@ -69,7 +89,7 @@ export const CreatePostWidget: React.FC = () => {
             const reader = new FileReader();
             reader.onloadend = () => resolve(reader.result as string);
             reader.onerror = reject;
-            reader.readAsDataURL(img);
+            reader.readAsDataURL(img.file);
           });
         })
       );
@@ -124,15 +144,15 @@ export const CreatePostWidget: React.FC = () => {
           {images.length > 0 && (
             <div className={`grid gap-2 ${images.length > 1 ? 'grid-cols-2' : 'grid-cols-1'}`}>
               {images.map((img, idx) => (
-                <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-200">
+                <div key={idx} className="relative group rounded-xl overflow-hidden border border-slate-200 bg-black/5 dark:bg-zinc-900/50 w-full flex items-center justify-center">
                   <img 
-                    src={URL.createObjectURL(img)} 
+                    src={img.preview} 
                     alt={`Preview ${idx + 1}`} 
-                    className="w-full h-32 object-cover"
+                    className="w-full h-auto max-h-[550px] object-contain rounded-xl"
                   />
                   <button
                     onClick={() => removeImage(idx)}
-                    className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-rose-500 text-white rounded-full transition-colors opacity-0 group-hover:opacity-100"
+                    className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-rose-500 backdrop-blur-md text-white rounded-full transition-colors opacity-0 group-hover:opacity-100 shadow-md"
                   >
                     <X className="w-3.5 h-3.5" />
                   </button>

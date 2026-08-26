@@ -8,6 +8,7 @@ interface StudentProfileFormProps {
   onSubmit: (data: any, imageFile: File | null) => Promise<void>;
   submitLabel: string;
   loading: boolean;
+  role?: string;
 }
 
 const DEPARTMENTS = [
@@ -31,8 +32,11 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
   initialData,
   onSubmit,
   submitLabel,
-  loading
+  loading,
+  role
 }) => {
+  const canUploadImage = role === 'faculty' || role === 'admin';
+  
   // Form fields states
   const [name, setName] = useState(initialData.name || '');
   const [department, setDepartment] = useState(initialData.department || DEPARTMENTS[0]);
@@ -235,21 +239,24 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
             alt="Avatar Preview"
             className="w-24 h-24 rounded-2xl object-cover border-4 border-white shadow-md bg-white"
           />
-          <label className="absolute -bottom-1.5 -right-1.5 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md cursor-pointer transition-transform group-hover:scale-105">
-            <Camera className="w-4 h-4" />
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleImageChange}
-              className="hidden"
-            />
-          </label>
+          {canUploadImage && (
+            <label className="absolute -bottom-1.5 -right-1.5 p-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-md cursor-pointer transition-transform group-hover:scale-105">
+              <Camera className="w-4 h-4" />
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="hidden"
+                disabled={!canUploadImage}
+              />
+            </label>
+          )}
         </div>
 
         <div className="flex-1 space-y-1 text-center sm:text-left">
           <h4 className="text-sm font-bold text-slate-800">Profile Representation Photo</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
-            Google photo is selected by default. You can upload a customized image (JPG, PNG, WebP) up to 5 MB.
+            {canUploadImage ? 'Google photo is selected by default. You can upload a customized image (JPG, PNG, WebP) up to 5 MB.' : 'Your profile photo is synced from your Google account. Only verified faculty and admins can upload custom avatars.'}
           </p>
           {errors.avatar && (
             <span className="text-[11px] text-rose-600 font-bold block">{errors.avatar}</span>

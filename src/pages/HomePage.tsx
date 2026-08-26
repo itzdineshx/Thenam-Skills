@@ -31,6 +31,7 @@ export const HomePage: React.FC = () => {
   const {
     currentUser,
     activities,
+    isFeedLoading,
     courses,
     events,
     connections,
@@ -290,7 +291,12 @@ export const HomePage: React.FC = () => {
         <main className="lg:col-span-6 space-y-4">
           {/* Learning Activity Cards Stream */}
           <div className="space-y-4">
-            {filteredActivities.length === 0 ? (
+            {isFeedLoading ? (
+              <div className="bg-white rounded-3xl p-12 text-center flex flex-col items-center justify-center border border-slate-200 shadow-sm">
+                <Loader2 className="w-8 h-8 text-indigo-500 animate-spin mb-4" />
+                <p className="text-sm font-bold text-slate-700">Loading your feed...</p>
+              </div>
+            ) : filteredActivities.length === 0 ? (
               <div className="bg-white rounded-3xl p-8 text-center text-slate-500 border border-slate-200">
                 <Sparkles className="w-8 h-8 mx-auto text-slate-300 mb-2" />
                 <p className="text-sm font-bold text-slate-700">No activities found in this filter</p>

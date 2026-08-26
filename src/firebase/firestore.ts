@@ -4,7 +4,15 @@ import {
   setDoc,
   updateDoc,
   serverTimestamp,
-  Timestamp
+  Timestamp,
+  collection,
+  onSnapshot,
+  query,
+  orderBy,
+  arrayUnion,
+  arrayRemove,
+  increment,
+  deleteDoc
 } from 'firebase/firestore';
 import { db } from './config';
 import { StudentProfile } from '../types';
@@ -165,4 +173,69 @@ export const dbService = {
     console.log('[Firestore] Issued certificate record:', cert);
     return true;
   }
+};
+
+export const createEventInFirestore = async (eventData: any): Promise<void> => {
+  try {
+    const docRef = doc(db, 'events', eventData.id);
+    
+    // Sanitize undefined values for Firestore
+    const sanitizedData = JSON.parse(JSON.stringify(eventData));
+    
+    await setDoc(docRef, {
+      ...sanitizedData,
+      createdAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error saving event to Firestore:', error);
+    throw error;
+  }
+};
+
+export const subscribeToEvents = (onData: (events: any[]) => void, onError: (error: any) => void) => {
+  const q = query(collection(db, 'events'), orderBy('createdAt', 'desc'));
+  
+  const unsubscribe = onSnapshot(
+    q,
+    (snapshot) => {
+      const liveEvents = snapshot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id
+      }));
+      onData(liveEvents);
+    },
+    (error) => {
+      console.error("Failed to fetch events from Firestore:", error);
+      onError(error);
+    }
+  );
+
+  return unsubscribe;
+};
+
+export const toggleEventRegistration = async (eventId: string, isCurrentlyRegistered: boolean, uid: string) => {
+  const eventRef = doc(db, 'events', eventId);
+
+  if (isCurrentlyRegistered) {
+    // Unregister
+    await updateDoc(eventRef, {
+      registeredUserIds: arrayRemove(uid),
+      registeredCount: increment(-1),
+    });
+  } else {
+    // Register
+    await updateDoc(eventRef, {
+      registeredUserIds: arrayUnion(uid),
+      registeredCount: increment(1),
+    });
+  }
+};
+
+export const deleteEvent = async (eventId: string, creatorId: string, userRole?: string): Promise<void> => {
+  // Since we don't have access to auth context here directly in the same way, we rely on AppContext checks or backend
+  // For the sake of UI-driven deletion via the prompt:
+  const isAuthor = true; // We'll enforce this check in the UI / AppContext before calling this
+  
+  const eventRef = doc(db, 'events', eventId);
+  await deleteDoc(eventRef);
 };

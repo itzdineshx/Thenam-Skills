@@ -12,8 +12,13 @@ export default function StudentOnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  React.useEffect(() => {
+    if (!user) {
+      navigate('/login');
+    }
+  }, [user, navigate]);
+
   if (!user) {
-    navigate('/login');
     return null;
   }
 
@@ -104,6 +109,7 @@ export default function StudentOnboardingPage() {
             onSubmit={handleSubmit}
             submitLabel="Save and Complete Profile Setup"
             loading={loading}
+            role="student"
           />
         </div>
 

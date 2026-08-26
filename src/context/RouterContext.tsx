@@ -27,52 +27,80 @@ export const RouterProvider: React.FC<{ children: ReactNode }> = ({ children }) 
   const [historyStack, setHistoryStack] = useState<string[]>(['/home']);
 
   useEffect(() => {
-    // Sync browser hash with currentPath
-    window.location.hash = currentPath;
+    if (window.location.hash !== `#${currentPath}`) {
+      window.location.hash = currentPath;
+    }
   }, [currentPath]);
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace(/^#/, '');
-      if (hash && hash !== currentPath) {
-        // Prevent redirecting to auth routes
-        if (hash === '/' || hash === '/register' || hash === '/auth') {
-          setCurrentPath('/home');
-        } else {
-          setCurrentPath(hash.startsWith('/') ? hash : `/${hash}`);
-        }
+      if (hash) {
+        setCurrentPath(prevPath => {
+          let nextPath = hash.startsWith('/') ? hash : `/${hash}`;
+          if (nextPath === '/' || nextPath === '/register' || nextPath === '/auth') {
+            nextPath = '/home';
+          }
+          return prevPath !== nextPath ? nextPath : prevPath;
+        });
       }
     };
 
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [currentPath]);
+  }, []); // Empty dependency array prevents re-binding loop
 
-  const navigate = (path: string) => {
-    // Never allow auth root/register, but allow onboarding and other routes
-    if (path === '/' || path === '/register' || path === '/auth') {
-      path = '/home';
-    }
-    setHistoryStack(prev => [...prev, path]);
-    setCurrentPath(path);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const navigate = React.useCallback((path: string) => {
+    setCurrentPath(prevPath => {
+      let nextPath = path;
+      if (nextPath === '/' || nextPath === '/register' || nextPath === '/auth') {
+        nextPath = '/home';
+      }
+      if (prevPath !== nextPath) {
+        setHistoryStack(prev => [...prev, nextPath]);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        return nextPath;
+      }
+      return prevPath;
+    });
+  }, []);
 
-  const goBack = () => {
-    if (historyStack.length > 1) {
-      const nextStack = [...historyStack];
-      nextStack.pop(); // remove current
-      const previous = nextStack[nextStack.length - 1];
-      setHistoryStack(nextStack);
-      setCurrentPath(previous || '/home');
-    } else {
-      setCurrentPath('/home');
-    }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
+  const goBack = React.useCallback(() => {
+    setHistoryStack(prevStack => {
+      if (prevStack.length > 1) {
+        const nextStack = [...prevStack];
+        nextStack.pop(); // remove current
+        const previous = nextStack[nextStack.length - 1] || '/home';
+        
+        setCurrentPath(prevPath => {
+          if (prevPath !== previous) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return previous;
+          }
+          return prevPath;
+        });
+        return nextStack;
+      } else {
+        setCurrentPath(prevPath => {
+          if (prevPath !== '/home') {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            return '/home';
+          }
+          return prevPath;
+        });
+        return prevStack;
+      }
+    });
+  }, []);
+
+  const contextValue = React.useMemo(() => ({
+    currentPath,
+    navigate,
+    goBack
+  }), [currentPath, navigate, goBack]);
 
   return (
-    <RouterContext.Provider value={{ currentPath, navigate, goBack }}>
+    <RouterContext.Provider value={contextValue}>
       {children}
     </RouterContext.Provider>
   );

@@ -48,6 +48,7 @@ export interface StudentProfile {
   isAvailableForHire?: boolean;
   preferredRoles?: string[];
   profileCompleted?: boolean;
+  isOnboardingCompleted?: boolean;
   role?: UserRole;
   followingEducators?: string[];
 }
@@ -159,10 +160,25 @@ export interface Project {
   featured?: boolean;
 }
 
-export interface EventItem {
+export type AspectRatio = '16:9' | '9:16' | '1:1' | '4:3';
+
+export interface Module {
   id: string;
   title: string;
+  youtubeUrl: string;
+  youtubeVideoId: string;
+  embedUrl: string;
+  thumbnailUrl: string;
+  duration?: string;
+  unlockCondition: 'immediate' | 'sequential';
+}
+
+export interface EventItem {
+  id: string;
+  creatorId?: string;
+  title: string;
   type: 'workshop' | 'webinar' | 'hackathon' | 'masterclass';
+  mode?: 'online_modular' | 'live_scheduled' | 'offline';
   domain: string;
   date: string;
   time: string;
@@ -174,14 +190,20 @@ export interface EventItem {
     avatar: string;
   };
   coverImage: string;
+  coverAspectRatio?: AspectRatio;
   description: string;
   registeredCount: number;
+  registeredUserIds?: string[];
   maxCapacity: number;
   isRegistered: boolean;
   recordingAvailable?: boolean;
   certificateOffered: boolean;
+  certificateEnabled?: boolean;
   meetLink?: string;
+  meetingLink?: string;
+  scheduledAt?: string;
   agenda: { time: string; topic: string }[];
+  modules?: Module[];
 }
 
 export interface ActivityComment {

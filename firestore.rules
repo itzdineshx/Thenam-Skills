@@ -1,0 +1,14 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read, write: if true; // Just keeping it open for dev, adjust as needed
+    }
+    match /events/{eventId} {
+      allow read: if true; // Public or authenticated users can view events
+      allow create: if request.auth != null; // Authenticated educators can publish
+      allow update: if request.auth != null; // Registered users can update registration count / host can edit
+      allow delete: if request.auth != null && (resource.data.creatorId == request.auth.uid || request.auth.token.role == 'admin');
+    }
+  }
+}

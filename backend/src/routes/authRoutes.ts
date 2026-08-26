@@ -6,6 +6,6 @@ const router = Router();
 
 router.post('/sync', authMiddleware, syncUser);
 router.get('/me', authMiddleware, getCurrentUser);
-router.post('/logout', authMiddleware, logoutUser);
+router.post('/logout', logoutUser);
 
 export default router;

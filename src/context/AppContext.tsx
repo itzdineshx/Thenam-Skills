@@ -27,6 +27,7 @@ import { INITIAL_COMMUNITIES } from '../mock/communities';
 import { useAuth } from './AuthContext';
 import { api } from '../services/api';
 import { socket } from '../services/socket';
+import { createEventInFirestore, subscribeToEvents, toggleEventRegistration as toggleEventRegistrationInFirestore, deleteEvent as deleteEventInFirestore } from '../firebase/firestore';
 
 interface AutomationPayload {
   title: string;
@@ -55,6 +56,7 @@ interface AppContextType {
   
   // Activities / Feed
   activities: ActivityItem[];
+  isFeedLoading: boolean;
   createActivity: (activity: Omit<ActivityItem, 'id' | 'timestamp' | 'likesCount' | 'isLiked' | 'commentsCount' | 'comments' | 'sharesCount'>) => void;
   toggleLikeActivity: (activityId: string) => void;
   addCommentToActivity: (activityId: string, text: string) => void;
@@ -104,7 +106,8 @@ interface AppContextType {
   showToast: (msg: string) => void;
 
   // New Features
-  createEvent: (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => void;
+  createEvent: (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => Promise<void>;
+  deleteEvent: (eventId: string) => Promise<void>;
   toggleFollowEducator: (educatorId: string) => void;
 }
 
@@ -158,6 +161,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       },
       journey: currentUserProfile.journey || [],
       profileCompleted: currentUserProfile.profileCompleted || false,
+      isOnboardingCompleted: currentUserProfile.isOnboardingCompleted || false,
       role: currentUserProfile.role || 'student',
       dateOfBirth: currentUserProfile.dateOfBirth || '',
       collegeLocation: currentUserProfile.collegeLocation || { city: '', state: '', country: '' }
@@ -174,10 +178,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     return saved ? JSON.parse(saved) : INITIAL_CERTIFICATES;
   });
 
-  const [activities, setActivities] = useState<ActivityItem[]>(() => {
-    const saved = localStorage.getItem('thenam_activities');
-    return saved ? JSON.parse(saved) : INITIAL_ACTIVITIES;
-  });
+  const [activities, setActivities] = useState<ActivityItem[]>([]);
+  const [isFeedLoading, setIsFeedLoading] = useState(true);
 
   const [projects, setProjects] = useState<Project[]>(() => {
     const saved = localStorage.getItem('thenam_projects');
@@ -256,7 +258,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       socket.on('activity_commented', onActivityCommented);
 
       const onNewEventNotification = (eventData: any) => {
-        setNotifications(prev => [{
+        setNotifications(nPrev => [{
           id: `notif_${Date.now()}_${Math.random()}`,
           type: 'event',
           title: `New Event Added: ${eventData.title}`,
@@ -265,10 +267,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
           isRead: false,
           link: '/events',
           badgeIcon: 'calendar'
-        }, ...prev]);
-        setEvents(prev => [eventData, ...prev]);
+        }, ...nPrev]);
       };
       socket.on('new_event_notification', onNewEventNotification);
+
+      // Listen to real-time events from Firestore
+      const unsubscribeEvents = subscribeToEvents(
+        (liveEvents) => {
+          // Deduplicate by ID to guarantee single-render cards
+          const uniqueEventsMap = new Map<string, EventItem>();
+          liveEvents.forEach((ev) => uniqueEventsMap.set(ev.id, ev));
+          setEvents(Array.from(uniqueEventsMap.values()));
+        },
+        (error) => console.error(error)
+      );
 
       api.get('/courses')
         .then(res => {
@@ -325,39 +337,45 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       api.get('/activities')
         .then(res => {
-          const backendActs = res.data.map((act: any) => ({
-            id: act.id || act._id,
-            type: act.type,
-            title: act.title,
-            description: act.description,
-            badgeText: act.badgeText || '💭 Student Post',
-            badgeTheme: act.badgeTheme || 'blue',
-            timestamp: act.createdAt ? new Date(act.createdAt).toLocaleDateString() : 'Just now',
-            metadata: act.metadata || {},
-            author: {
-              id: act.user?.firebaseUid || act.user?.id || '',
-              name: act.user?.name || 'Student',
-              avatar: act.user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
-              headline: `${act.user?.year || 'Student'} - ${act.user?.department || 'Engineering'}`,
-              college: act.user?.collegeName || 'DMI College of Engineering'
-            },
-            likesCount: act.likesCount || 0,
-            commentsCount: act.commentsCount || 0,
-            sharesCount: act.sharesCount || 0,
-            comments: act.comments || [],
-            isLiked: act.likedBy ? act.likedBy.includes(currentUserProfile.uid || currentUserProfile.id || '') : false,
-            isSaved: false,
-            createdAt: act.createdAt
-          }));
-          
-          // Combine with mock activities so mock posts are still visible
-          setActivities(prev => {
-            const newActs = [...backendActs];
-            const mockActs = INITIAL_ACTIVITIES.filter(mAct => !newActs.find(a => a.id === mAct.id));
-            return [...newActs, ...mockActs];
+          const backendActs = res.data.map((act: any) => {
+            const metadata = act.metadata || {};
+            if (metadata.imageUrls && Array.isArray(metadata.imageUrls)) {
+              metadata.imageUrls = metadata.imageUrls.filter((url: string) => !url.startsWith('blob:'));
+            }
+            
+            return {
+              id: act.id || act._id,
+              type: act.type,
+              title: act.title,
+              description: act.description,
+              badgeText: act.badgeText || '💭 Student Post',
+              badgeTheme: act.badgeTheme || 'blue',
+              timestamp: act.createdAt ? new Date(act.createdAt).toLocaleDateString() : 'Just now',
+              metadata: metadata,
+              author: {
+                id: act.user?.firebaseUid || act.user?.id || '',
+                name: act.user?.name || 'Student',
+                avatar: act.user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+                headline: `${act.user?.year || 'Student'} - ${act.user?.department || 'Engineering'}`,
+                college: act.user?.collegeName || 'DMI College of Engineering'
+              },
+              likesCount: act.likesCount || 0,
+              commentsCount: act.commentsCount || 0,
+              sharesCount: act.sharesCount || 0,
+              comments: act.comments || [],
+              isLiked: act.likedBy ? act.likedBy.includes(currentUserProfile.uid || currentUserProfile.id || '') : false,
+              isSaved: false,
+              createdAt: act.createdAt
+            };
           });
+          
+          setActivities(backendActs);
+          setIsFeedLoading(false);
         })
-        .catch(err => console.error('Failed to load activities from API:', err));
+        .catch(err => {
+          console.error('Failed to load activities from API:', err);
+          setIsFeedLoading(false);
+        });
 
       api.get('/profile/network/recommendations')
         .then(res => {
@@ -369,6 +387,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         socket.off('activity_liked', onActivityLiked);
         socket.off('activity_commented', onActivityCommented);
         socket.off('new_event_notification');
+        unsubscribeEvents();
         socket.disconnect();
       };
     }
@@ -842,37 +861,63 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
   };
 
   // Events
-  const toggleEventRegistration = (eventId: string) => {
-    setEvents(prev => prev.map(ev => {
-      if (ev.id === eventId) {
-        const isRegistered = !ev.isRegistered;
-        if (isRegistered) {
-          showToast(`Successfully registered for ${ev.title}`);
-        } else {
-          showToast(`Registration cancelled for ${ev.title}`);
-        }
-        return {
-          ...ev,
-          isRegistered,
-          registeredCount: isRegistered ? ev.registeredCount + 1 : Math.max(0, ev.registeredCount - 1)
-        };
-      }
-      return ev;
-    }));
+  const toggleEventRegistration = async (eventId: string) => {
+    const event = events.find(ev => ev.id === eventId);
+    if (!event) return;
+    
+    const isCurrentlyRegistered = event.registeredUserIds?.includes(currentUser.id) || false;
+
+    try {
+      await toggleEventRegistrationInFirestore(eventId, isCurrentlyRegistered, currentUser.id);
+      showToast(isCurrentlyRegistered ? `Registration cancelled for ${event.title}` : `Successfully registered for ${event.title}`);
+    } catch (err) {
+      console.error("Failed to update registration:", err);
+      showToast("Error updating event registration");
+    }
   };
 
-  const createEvent = (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => {
+  const createEvent = async (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => {
     const newEvent: EventItem = {
       ...eventData,
       id: `ev_${Date.now()}`,
+      creatorId: currentUser.id,
       registeredCount: 0,
       isRegistered: false
     };
+
+    try {
+      await createEventInFirestore(newEvent);
+    } catch (err) {
+      console.error('Failed to store event in Firestore:', err);
+      showToast('Error storing event in database.');
+      throw err;
+    }
+
     // Emit real-time notification
     socket.emit('create_event', newEvent);
     
-    setEvents(prev => [newEvent, ...prev]);
     showToast('Event created successfully and broadcasted globally!');
+  };
+
+  const deleteEvent = async (eventId: string) => {
+    const event = events.find(ev => ev.id === eventId);
+    if (!event) return;
+
+    const isAuthor = currentUser.id === event.creatorId;
+    const isEducatorOrAdmin = currentUser.role === 'faculty' || currentUser.role === 'admin';
+
+    if (!isAuthor && !isEducatorOrAdmin) {
+      showToast("Forbidden: Only educators and the event creator can delete this event.");
+      return;
+    }
+
+    try {
+      await deleteEventInFirestore(eventId, event.creatorId || '', currentUser.role);
+      showToast('Event deleted successfully');
+    } catch (err) {
+      console.error('Failed to delete event:', err);
+      showToast('Error deleting event.');
+    }
   };
 
   const toggleFollowEducator = (educatorId: string) => {
@@ -1003,6 +1048,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         activeAutomationModal,
         closeAutomationModal,
         activities,
+        isFeedLoading,
         createActivity,
         toggleLikeActivity,
         addCommentToActivity,
@@ -1034,6 +1080,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toastMessage,
         showToast,
         createEvent,
+        deleteEvent,
         toggleFollowEducator
       }}
     >
