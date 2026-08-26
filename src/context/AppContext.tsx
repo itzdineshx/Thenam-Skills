@@ -256,17 +256,23 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       socket.on('activity_commented', onActivityCommented);
 
       const onNewEventNotification = (eventData: any) => {
-        setNotifications(prev => [{
-          id: `notif_${Date.now()}_${Math.random()}`,
-          type: 'event',
-          title: `New Event Added: ${eventData.title}`,
-          message: `Hosted by ${eventData.speaker?.name || 'Educator'}`,
-          timestamp: 'Just now',
-          isRead: false,
-          link: '/events',
-          badgeIcon: 'calendar'
-        }, ...prev]);
-        setEvents(prev => [eventData, ...prev]);
+        setEvents(prev => {
+          // Prevent duplicate events
+          if (prev.some(ev => ev.id === eventData.id)) return prev;
+          
+          setNotifications(nPrev => [{
+            id: `notif_${Date.now()}_${Math.random()}`,
+            type: 'event',
+            title: `New Event Added: ${eventData.title}`,
+            message: `Hosted by ${eventData.speaker?.name || 'Educator'}`,
+            timestamp: 'Just now',
+            isRead: false,
+            link: '/events',
+            badgeIcon: 'calendar'
+          }, ...nPrev]);
+          
+          return [eventData, ...prev];
+        });
       };
       socket.on('new_event_notification', onNewEventNotification);
 
@@ -325,30 +331,37 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
       api.get('/activities')
         .then(res => {
-          const backendActs = res.data.map((act: any) => ({
-            id: act.id || act._id,
-            type: act.type,
-            title: act.title,
-            description: act.description,
-            badgeText: act.badgeText || '💭 Student Post',
-            badgeTheme: act.badgeTheme || 'blue',
-            timestamp: act.createdAt ? new Date(act.createdAt).toLocaleDateString() : 'Just now',
-            metadata: act.metadata || {},
-            author: {
-              id: act.user?.firebaseUid || act.user?.id || '',
-              name: act.user?.name || 'Student',
-              avatar: act.user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
-              headline: `${act.user?.year || 'Student'} - ${act.user?.department || 'Engineering'}`,
-              college: act.user?.collegeName || 'DMI College of Engineering'
-            },
-            likesCount: act.likesCount || 0,
-            commentsCount: act.commentsCount || 0,
-            sharesCount: act.sharesCount || 0,
-            comments: act.comments || [],
-            isLiked: act.likedBy ? act.likedBy.includes(currentUserProfile.uid || currentUserProfile.id || '') : false,
-            isSaved: false,
-            createdAt: act.createdAt
-          }));
+          const backendActs = res.data.map((act: any) => {
+            const metadata = act.metadata || {};
+            if (metadata.imageUrls && Array.isArray(metadata.imageUrls)) {
+              metadata.imageUrls = metadata.imageUrls.filter((url: string) => !url.startsWith('blob:'));
+            }
+            
+            return {
+              id: act.id || act._id,
+              type: act.type,
+              title: act.title,
+              description: act.description,
+              badgeText: act.badgeText || '💭 Student Post',
+              badgeTheme: act.badgeTheme || 'blue',
+              timestamp: act.createdAt ? new Date(act.createdAt).toLocaleDateString() : 'Just now',
+              metadata: metadata,
+              author: {
+                id: act.user?.firebaseUid || act.user?.id || '',
+                name: act.user?.name || 'Student',
+                avatar: act.user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+                headline: `${act.user?.year || 'Student'} - ${act.user?.department || 'Engineering'}`,
+                college: act.user?.collegeName || 'DMI College of Engineering'
+              },
+              likesCount: act.likesCount || 0,
+              commentsCount: act.commentsCount || 0,
+              sharesCount: act.sharesCount || 0,
+              comments: act.comments || [],
+              isLiked: act.likedBy ? act.likedBy.includes(currentUserProfile.uid || currentUserProfile.id || '') : false,
+              isSaved: false,
+              createdAt: act.createdAt
+            };
+          });
           
           // Combine with mock activities so mock posts are still visible
           setActivities(prev => {

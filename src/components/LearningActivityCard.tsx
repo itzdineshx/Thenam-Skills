@@ -308,18 +308,18 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
         )}
 
         {(activity.metadata?.imageUrl || (activity.metadata?.imageUrls && activity.metadata.imageUrls.length > 0)) && activity.type !== 'project_milestone' && (
-          <div className="mt-4 rounded-xl overflow-hidden border border-slate-200">
+          <div className="mt-4 rounded-xl overflow-hidden border border-slate-200 bg-black/5 dark:bg-zinc-900/50 w-full max-h-[550px] flex items-center justify-center">
             {activity.metadata?.imageUrls ? (
-              <div className={`grid gap-1 ${activity.metadata.imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'} ${activity.metadata.imageUrls.length > 2 ? 'grid-rows-2' : ''}`}>
+              <div className={`grid gap-1 w-full ${activity.metadata.imageUrls.length > 1 ? 'grid-cols-2' : 'grid-cols-1'} ${activity.metadata.imageUrls.length > 2 ? 'grid-rows-2' : ''}`}>
                 {activity.metadata.imageUrls.map((url, index) => (
                   <img
                     key={index}
                     src={url}
                     alt={`Activity image ${index + 1}`}
-                    className={`w-full object-cover ${
+                    className={`w-full h-auto max-h-[550px] object-contain rounded-xl ${
                       activity.metadata!.imageUrls!.length === 3 && index === 0 
-                        ? 'row-span-2 h-full' 
-                        : 'h-48'
+                        ? 'row-span-2' 
+                        : ''
                     }`}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
@@ -332,7 +332,7 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
               <img
                 src={activity.metadata?.imageUrl}
                 alt="Activity image"
-                className="w-full max-h-72 object-cover"
+                className="w-full h-auto max-h-[550px] object-contain rounded-xl"
                 onError={(e) => {
                   e.currentTarget.onerror = null;
                   e.currentTarget.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Image+Not+Found';
