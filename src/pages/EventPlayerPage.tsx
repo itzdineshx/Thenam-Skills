@@ -4,6 +4,7 @@ import { useApp } from '../context/AppContext';
 import { Lock, PlayCircle, CheckCircle2, Award, ChevronRight, ChevronLeft } from 'lucide-react';
 import { Module } from '../types';
 import confetti from 'canvas-confetti';
+import { ModulePlayer } from '../components/ModulePlayer';
 
 export const EventPlayerPage: React.FC = () => {
   const { currentPath, navigate } = useRouter();
@@ -168,43 +169,12 @@ export const EventPlayerPage: React.FC = () => {
             )}
           </div>
         ) : activeModule ? (
-          <div className="space-y-4">
-            {/* Video Player Canvas */}
-            <div className="relative w-full aspect-video rounded-3xl overflow-hidden shadow-2xl border border-slate-800 bg-black">
-              <iframe
-                src={activeModule.embedUrl}
-                title={activeModule.title}
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              />
-            </div>
-
-            {/* Video Controls & Info */}
-            <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h2 className="text-lg font-black text-slate-900">{activeModule.title}</h2>
-                <p className="text-xs text-slate-500 mt-1 font-medium">Part {activeIndex + 1} of {modules.length}</p>
-              </div>
-              
-              <button
-                onClick={handleMarkCompleted}
-                className="shrink-0 px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-sm font-bold shadow-md transition-all flex items-center justify-center gap-2"
-              >
-                {completedModuleIds.includes(activeModule.id) ? (
-                  <>
-                    <span>Next Module</span>
-                    <ChevronRight className="w-4 h-4" />
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>Mark Completed & Next</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
+          <ModulePlayer 
+            videoId={activeModule.youtubeVideoId} 
+            moduleTitle={`${activeModule.title} (Part ${activeIndex + 1} of ${modules.length})`}
+            onComplete={handleMarkCompleted} 
+            isAlreadyCompleted={completedModuleIds.includes(activeModule.id)}
+          />
         ) : null}
       </main>
     </div>
