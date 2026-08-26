@@ -1,5 +1,18 @@
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from './config';
+import { ref, uploadBytesResumable, getDownloadURL, uploadBytes } from 'firebase/storage';
+import { doc, updateDoc } from 'firebase/firestore';
+import { storage, db } from './config';
+
+export const uploadEducatorAvatar = async (userId: string, file: File): Promise<string> => {
+  const storageRef = ref(storage, `users/${userId}/profile/avatar_${Date.now()}`);
+  const snapshot = await uploadBytes(storageRef, file, { contentType: file.type });
+  const downloadUrl = await getDownloadURL(snapshot.ref);
+
+  await updateDoc(doc(db, 'users', userId), {
+    photoURL: downloadUrl,
+    updatedAt: new Date().toISOString()
+  });
+  return downloadUrl;
+};
 
 export const uploadProfileImage = async (uid: string, file: File): Promise<string> => {
   // 1. Validate file type
@@ -38,5 +51,6 @@ export const storageService = {
     console.log('[Storage Mock] Uploaded project cover');
     return 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?w=800';
   },
-  uploadProfileImage
+  uploadProfileImage,
+  uploadEducatorAvatar
 };

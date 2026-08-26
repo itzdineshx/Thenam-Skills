@@ -35,7 +35,7 @@ import { ConnectModal } from '../components/ConnectModal';
 import { SkillSelector } from '../components/SkillSelector';
 import { StudentProfileForm } from '../components/StudentProfileForm';
 import { LearningActivityCard } from '../components/LearningActivityCard';
-import { uploadProfileImage } from '../firebase/storage';
+import { uploadProfileImage, uploadEducatorAvatar } from '../firebase/storage';
 
 export const ProfilePage: React.FC = () => {
   const { currentUser, updateCurrentUser, addSkillToProfile, removeSkillFromProfile, certificates, projects, activities, showToast } = useApp();
@@ -104,7 +104,11 @@ export const ProfilePage: React.FC = () => {
       
       // Upload new avatar if selected
       if (imageFile) {
-        finalAvatar = await uploadProfileImage(currentUser.id, imageFile);
+        if (currentUser.role === 'faculty' || currentUser.role === 'admin') {
+          finalAvatar = await uploadEducatorAvatar(currentUser.id, imageFile);
+        } else {
+          finalAvatar = await uploadProfileImage(currentUser.id, imageFile);
+        }
       }
 
       await updateCurrentUser({
@@ -694,6 +698,7 @@ export const ProfilePage: React.FC = () => {
                 onSubmit={handleEditProfileSubmit}
                 submitLabel="Apply Changes"
                 loading={editLoading}
+                role={currentUser.role}
               />
             </div>
           </div>

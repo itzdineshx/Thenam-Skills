@@ -17,6 +17,7 @@ import { CertificatesPage } from './pages/CertificatesPage';
 import { CertificateDetailPage } from './pages/CertificateDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { EventsPage } from './pages/EventsPage';
+import { EventPlayerPage } from './pages/EventPlayerPage';
 import { CommunitiesPage } from './pages/CommunitiesPage';
 import { TalentPage } from './pages/TalentPage';
 import { AchievementsPage } from './pages/AchievementsPage';
@@ -46,10 +47,10 @@ const AppContent: React.FC = () => {
 
   // Intercept and redirect completed users attempting to load onboarding
   React.useEffect(() => {
-    if (user && currentUserProfile?.profileCompleted === true && currentPath === '/onboarding') {
+    if (currentUserProfile?.isOnboardingCompleted === true && currentPath === '/onboarding') {
       navigate('/home');
     }
-  }, [user, currentUserProfile, currentPath, navigate]);
+  }, [currentUserProfile, currentPath, navigate]);
 
   if (loading) {
     return (
@@ -64,7 +65,9 @@ const AppContent: React.FC = () => {
   }
 
   // Force onboarding if profile is incomplete
-  if (!currentUserProfile || currentUserProfile.profileCompleted !== true) {
+  // Note: We check `user` so we don't trap mock educators (where user is null) in a blank screen.
+  // We also check both flags to support older mock profiles.
+  if (user && (!currentUserProfile || (currentUserProfile.isOnboardingCompleted !== true && currentUserProfile.profileCompleted !== true))) {
     return <StudentOnboardingPage />;
   }
 
@@ -91,6 +94,9 @@ const AppContent: React.FC = () => {
       return <OpeningSoonPage />;
     }
     if (path.startsWith('/events')) {
+      if (path.includes('/learn')) {
+        return <EventPlayerPage />;
+      }
       return <EventsPage />;
     }
     if (path.startsWith('/communities')) {

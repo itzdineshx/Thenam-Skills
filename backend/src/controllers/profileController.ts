@@ -105,6 +105,7 @@ export const createProfile = asyncHandler(async (req: AuthenticatedRequest, res:
     linkedinURL: linkedinURL || null,
     githubURL: githubURL || null,
     profileCompleted: true,
+    isOnboardingCompleted: true,
     updatedAt: admin.firestore.Timestamp.now()
   };
 

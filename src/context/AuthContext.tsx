@@ -62,7 +62,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       },
       journey: [],
       role: 'faculty',
-      profileCompleted: true
+      profileCompleted: true,
+      isOnboardingCompleted: true
     };
     localStorage.setItem('mockEducator', JSON.stringify(mockProfile));
     setCurrentUserProfile(mockProfile);
