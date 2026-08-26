@@ -26,7 +26,7 @@ export const authMiddleware = async (req: AuthenticatedRequest, res: Response, n
         id: 'mock_educator_jayamurugan',
         firebaseUid: 'mock_educator_jayamurugan',
         email: 'jayamurugan@thenam.edu',
-        name: 'Dr. Jayamurugan',
+        name: 'Jayamurugan',
         role: 'faculty',
         profileCompleted: true
       };
