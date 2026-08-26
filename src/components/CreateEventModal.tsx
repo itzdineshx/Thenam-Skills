@@ -21,7 +21,6 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
     date: '',
     time: '',
     duration: '',
-    duration: '',
     description: '',
     maxCapacity: 100,
     coverImage: '',
