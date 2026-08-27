@@ -169,8 +169,8 @@ export const HomePage: React.FC = () => {
               Welcome back, {currentUser.name}! 👋
             </h1>
             
-            <p className="text-xs sm:text-sm text-indigo-100/80 leading-relaxed">
-              Continue your engineering pathway. You are journey is not alone at <strong className="text-white">Thenam campus</strong>.
+            <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
+              Continue your verified engineering pathway. Your journey to industry-grade skills starts right here at <strong className="text-white font-bold">THENAM CAMPUS</strong>.
             </p>
           </div>
 
@@ -278,23 +278,48 @@ export const HomePage: React.FC = () => {
               <button onClick={() => navigate('/profile/edit')} className="text-xs text-indigo-600 font-semibold hover:underline">Edit</button>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {currentUser.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] font-semibold border border-slate-200/70 transition-colors"
-                >
-                  {skill}
-                </span>
-              ))}
+              {currentUser.skills && currentUser.skills.length > 0 ? (
+                currentUser.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] font-semibold border border-slate-200/70 transition-colors"
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <p className="text-xs text-slate-400">No skills added yet</p>
+              )}
             </div>
           </div>
-
-          {/* Create Post Widget replacing Simulate Achievement */}
-          <CreatePostWidget />
         </aside>
 
-        {/* Center Col (6 cols on desktop): Learning Activity Feed */}
-        <main className="lg:col-span-6 space-y-4">
+        {/* Center Col (6 cols on desktop): Learning Activity Feed & Composer */}
+        <main className="lg:col-span-6 space-y-5 min-w-0">
+          
+          {/* Post Composer Widget at the Top of Center Feed */}
+          <CreatePostWidget />
+
+          {/* Activity Category Filters */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {filterTabs.map((tab) => {
+              const isActive = activeFilter === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveFilter(tab.value)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Learning Activity Cards Stream */}
           <div className="space-y-4">
             {isFeedLoading ? (

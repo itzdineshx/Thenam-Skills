@@ -24,6 +24,8 @@ import {
 import { ActivityItem } from '../types';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
+import { ActivityModal } from './ActivityModal';
+import { cleanPostContent } from '../utils/textCleaner';
 
 import { getRelativeTime } from '../utils/time';
 
@@ -40,9 +42,13 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const isLongDescription = activity.description && (activity.description.length > 150 || activity.description.split('\n').length > 2);
+  const cleanTitle = cleanPostContent(activity.title);
+  const cleanDesc = cleanPostContent(activity.description);
+
+  const isLongDescription = cleanDesc && (cleanDesc.length > 150 || cleanDesc.split('\n').length > 2);
+  const showTitle = cleanTitle && cleanTitle.toLowerCase() !== cleanDesc.split('\n')[0]?.trim().toLowerCase() && activity.type !== 'student_post';
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -220,19 +226,21 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
 
         {/* Activity Content */}
         <div className="mt-4 space-y-2">
-          <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-            {activity.title}
-          </h3>
-          <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-            <div className={!isDescriptionExpanded && isLongDescription ? "line-clamp-2" : ""}>
-              {activity.description}
+          {showTitle && (
+            <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
+              {cleanTitle}
+            </h3>
+          )}
+          <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-wrap">
+            <div className={isLongDescription ? "line-clamp-2" : ""}>
+              {cleanDesc}
             </div>
             {isLongDescription && (
               <button
-                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                onClick={() => setIsModalOpen(true)}
                 className="text-slate-500 font-bold hover:text-indigo-600 mt-0.5 cursor-pointer transition-colors text-xs"
               >
-                {isDescriptionExpanded ? 'show less' : '...read more'}
+                ...see more
               </button>
             )}
           </div>
@@ -360,6 +368,34 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
                 }}
               />
             )}
+          </div>
+        )}
+        {activity.metadata?.externalUrl && (
+          <div className="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between gap-3 group hover:border-indigo-300 transition-all">
+            <div className="flex items-center gap-2.5 overflow-hidden">
+              <div className="p-2 rounded-lg bg-indigo-50 text-indigo-600 shrink-0">
+                <ExternalLink className="w-4 h-4" />
+              </div>
+              <div className="truncate">
+                <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-wider block">Attached Link</span>
+                <a
+                  href={activity.metadata.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate block"
+                >
+                  {activity.metadata.externalUrl}
+                </a>
+              </div>
+            </div>
+            <a
+              href={activity.metadata.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 bg-white border border-slate-200 text-slate-700 text-xs font-bold rounded-lg group-hover:bg-indigo-600 group-hover:text-white group-hover:border-indigo-600 transition-all shrink-0"
+            >
+              Open
+            </a>
           </div>
         )}
       </div>
@@ -512,6 +548,13 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
             </button>
           </div>
         </div>
+      )}
+
+      {isModalOpen && (
+        <ActivityModal 
+          activity={activity} 
+          onClose={() => setIsModalOpen(false)} 
+        />
       )}
     </article>
   );

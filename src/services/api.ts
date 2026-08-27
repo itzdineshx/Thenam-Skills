@@ -6,9 +6,9 @@ async function request(path: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${path}`;
   const headers = new Headers(options.headers || {});
 
-  // 1. Automatically fetch and inject Firebase ID JWT token if authenticated
+  // 1. Automatically fetch and inject Firebase ID JWT token or Mock token if authenticated
   const currentUser = auth.currentUser;
-  const mockUser = localStorage.getItem('mockEducator');
+  const mockUser = localStorage.getItem('mockEducator_v2') || localStorage.getItem('mockEducator');
   
   if (mockUser) {
     headers.set('Authorization', 'Bearer MOCK_EDUCATOR_TOKEN');

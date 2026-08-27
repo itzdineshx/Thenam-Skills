@@ -35,6 +35,7 @@ import { ConnectModal } from '../components/ConnectModal';
 import { SkillSelector } from '../components/SkillSelector';
 import { StudentProfileForm } from '../components/StudentProfileForm';
 import { LearningActivityCard } from '../components/LearningActivityCard';
+import { CreatePostWidget } from '../components/CreatePostWidget';
 import { uploadProfileImage, uploadEducatorAvatar, storageService } from '../firebase/storage';
 
 export const ProfilePage: React.FC = () => {
@@ -460,16 +461,26 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
+          {isOwnProfile && <CreatePostWidget />}
+
           <div className="space-y-6">
             {activities
-              .filter(act => act.author.id === profile.id)
+              .filter(act => 
+                act.author?.id === profile.id || 
+                (profile.name && act.author?.name?.toLowerCase() === profile.name?.toLowerCase()) ||
+                (profile.id === 'mock_educator_jayamurugan' && act.author?.name?.toLowerCase().includes('jayamurugan'))
+              )
               .sort((a, b) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
               .map(act => (
                 <LearningActivityCard key={act.id} activity={act} />
               ))}
-            {activities.filter(act => act.author.id === profile.id).length === 0 && (
+            {activities.filter(act => 
+                act.author?.id === profile.id || 
+                (profile.name && act.author?.name?.toLowerCase() === profile.name?.toLowerCase()) ||
+                (profile.id === 'mock_educator_jayamurugan' && act.author?.name?.toLowerCase().includes('jayamurugan'))
+              ).length === 0 && (
               <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
-                No activity posts published yet.
+                No activity posts published yet. Use the post widget above to publish your first update!
               </div>
             )}
           </div>

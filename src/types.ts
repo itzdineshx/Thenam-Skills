@@ -246,6 +246,7 @@ export interface ActivityItem {
     verificationHash?: string;
     imageUrl?: string;
     imageUrls?: string[];
+    externalUrl?: string;
     metrics?: string;
   };
   likesCount: number;
