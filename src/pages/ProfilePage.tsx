@@ -53,9 +53,56 @@ export const ProfilePage: React.FC = () => {
 
   useEffect(() => {
     if (!isOwnProfile && profileId) {
+      if (profileId === 'mock_educator_jayamurugan') {
+        setPublicProfile({
+          id: 'mock_educator_jayamurugan',
+          name: 'Jayamurugan V',
+          headline: 'Senior Educator & AI Specialist',
+          college: 'THENAM Campus',
+          department: 'Computer Science',
+          yearOfStudy: 'Faculty',
+          location: 'Chennai, India',
+          avatar: 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg',
+          coverImage: 'https://images.unsplash.com/photo-1524169358666-79f22534bc6e?w=1200&auto=format&fit=crop&q=80',
+          bio: 'Educator shaping the future of AI. Mentoring students to achieve global industry standards.',
+          email: 'jayamurugan@thenam.edu',
+          skills: ['Machine Learning', 'AI', 'Mentorship'],
+          interests: [],
+          metrics: { coursesCompleted: 0, certificatesCount: 0, projectsCount: 0, networkCount: 1200, xpPoints: 0, streakDays: 0, globalRank: 1 },
+          journey: [],
+          role: 'faculty',
+          profileCompleted: true,
+          isOnboardingCompleted: true
+        } as any);
+        return;
+      }
+
       api.get(`/profile/${profileId}`)
         .then(res => setPublicProfile(res.data))
-        .catch(err => console.error('Failed to load public portfolio via API:', err));
+        .catch(err => {
+          console.error('Failed to load public portfolio via API:', err);
+          // Set a not found dummy profile to prevent fallback to currentUser
+          setPublicProfile({
+            id: 'not_found',
+            name: 'User Not Found',
+            headline: '',
+            college: '',
+            department: '',
+            yearOfStudy: '',
+            location: '',
+            avatar: 'https://ui-avatars.com/api/?name=Not+Found&background=random',
+            coverImage: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
+            bio: 'This profile could not be found or does not exist.',
+            email: '',
+            skills: [],
+            interests: [],
+            metrics: { coursesCompleted: 0, certificatesCount: 0, projectsCount: 0, networkCount: 0, xpPoints: 0, streakDays: 0, globalRank: 0 },
+            journey: [],
+            role: 'student',
+            profileCompleted: true,
+            isOnboardingCompleted: true
+          } as any);
+        });
     } else {
       setPublicProfile(null);
     }
@@ -146,6 +193,20 @@ export const ProfilePage: React.FC = () => {
     await updateCurrentUser({ skills: newSkills });
     setIsSkillModalOpen(false);
   };
+
+  if (profile.id === 'not_found') {
+    return (
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 text-center space-y-6">
+        <div className="bg-white rounded-3xl p-16 shadow-sm border border-slate-200 inline-block">
+          <div className="w-20 h-20 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-400">
+            <X className="w-10 h-10" />
+          </div>
+          <h2 className="text-2xl font-black text-slate-900 mb-2">User Not Found</h2>
+          <p className="text-slate-500 max-w-md">The profile you are looking for does not exist or has been removed from the platform.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">

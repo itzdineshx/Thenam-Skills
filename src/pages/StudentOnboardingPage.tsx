@@ -22,7 +22,7 @@ export default function StudentOnboardingPage() {
     return null;
   }
 
-  const handleSubmit = async (formData: any, imageFile: File | null) => {
+  const handleSubmit = async (formData: any, imageFile: File | null, coverImageFile: File | null) => {
     setLoading(true);
     setError('');
     try {
@@ -31,6 +31,12 @@ export default function StudentOnboardingPage() {
       // 1. Upload profile image to Firebase Storage if selected
       if (imageFile) {
         photoURL = await uploadProfileImage(user.uid, imageFile);
+      }
+      
+      let coverImage = formData.coverImage || '';
+      if (coverImageFile) {
+        const { storageService } = await import('../firebase/storage');
+        coverImage = await storageService.uploadProfileCover(user.uid, coverImageFile);
       }
 
       // 2. Map form data to backend schema
@@ -46,6 +52,7 @@ export default function StudentOnboardingPage() {
         collegeLocation: formData.collegeLocation,
         linkedinURL: formData.linkedinURL,
         githubURL: formData.githubURL,
+        coverImage
       };
 
       // 3. Save profile to backend API

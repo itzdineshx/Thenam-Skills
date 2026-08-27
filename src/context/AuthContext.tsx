@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const refreshProfile = async () => {
     if (auth.currentUser) {
       try {
-        const res = await api.get('/auth/me');
+        const res = await api.get(`/auth/me?t=${Date.now()}`);
         setCurrentUserProfile(res.data);
       } catch (error) {
         console.error('Failed to refresh user profile:', error);

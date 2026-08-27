@@ -371,16 +371,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             };
           });
           
-          setActivities(prev => {
-            const newActs = [...backendActs];
-            const mockActs = INITIAL_ACTIVITIES.filter(mAct => !newActs.find(a => a.id === mAct.id));
-            return [...newActs, ...mockActs];
-          });
+          setActivities(backendActs);
           setIsFeedLoading(false);
         })
         .catch(err => {
           console.error('Failed to load activities from API:', err);
-          setActivities(INITIAL_ACTIVITIES); // Fallback to mock data if API fails
+          setActivities([]); // Do not fallback to mock data
           setIsFeedLoading(false);
         });
 
@@ -417,6 +413,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (updated.college) dbUpdates.collegeName = updated.college;
       if (updated.phone) dbUpdates.phoneNumber = updated.phone;
       if (updated.avatar) dbUpdates.photoURL = updated.avatar;
+      if (updated.coverImage) dbUpdates.coverImage = updated.coverImage;
+      if (updated.dateOfBirth) dbUpdates.dateOfBirth = updated.dateOfBirth;
       if (updated.linkedinUrl !== undefined) dbUpdates.linkedinURL = updated.linkedinUrl || null;
       if (updated.githubUrl !== undefined) dbUpdates.githubURL = updated.githubUrl || null;
       if (updated.location) {
