@@ -67,7 +67,7 @@ export const INITIAL_EVENTS: EventItem[] = [
       name: 'Jayamurugan V',
       role: 'Founder',
       company: 'Thenam Software Solutions',
-      avatar: 'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=200&auto=format&fit=crop&q=80'
+      avatar: 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
     },
     coverImage: 'https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80',
     description: 'Learn to build intelligent AI Chatbots using modern tools, LLMs, and real-world applications. We will cover Introduction to AI Chatbots, LLMs, API Integration & Tools, and Real-world Use Cases.',

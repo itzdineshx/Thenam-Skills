@@ -9,6 +9,8 @@ import LoginPage from './pages/LoginPage';
 import StudentOnboardingPage from './pages/StudentOnboardingPage';
 import { ensureUserDocument } from './firebase/firestore';
 
+import EducatorLoginPage from './pages/EducatorLoginPage';
+
 // Pages
 import { HomePage } from './pages/HomePage';
 import { LearnPage } from './pages/LearnPage';
@@ -61,6 +63,9 @@ const AppContent: React.FC = () => {
   }
 
   if (!user && !currentUserProfile) {
+    if (currentPath.toLowerCase() === '/educator/login') {
+      return <EducatorLoginPage />;
+    }
     return <LoginPage />;
   }
 

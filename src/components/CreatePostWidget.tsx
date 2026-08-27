@@ -130,7 +130,12 @@ export const CreatePostWidget: React.FC = () => {
         <img
           src={currentUser.avatar}
           alt={currentUser.name}
-          className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0"
+          className="w-10 h-10 rounded-full object-cover border border-slate-200 shrink-0 bg-slate-100"
+          onError={(e) => {
+            const target = e.target as HTMLImageElement;
+            target.onerror = null;
+            target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=100`;
+          }}
         />
         <div className="flex-1 space-y-3">
           <textarea

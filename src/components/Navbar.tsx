@@ -276,7 +276,13 @@ export const Navbar: React.FC = () => {
                 <img
                   src={currentUser.avatar}
                   alt={currentUser.name}
-                  className="w-9 h-9 rounded-full object-cover border-2 border-indigo-600 shadow-xs"
+                  referrerPolicy="no-referrer"
+                  className="w-9 h-9 rounded-full object-cover border-2 border-indigo-600 shadow-xs bg-slate-100"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=100`;
+                  }}
                 />
                 <ChevronDown className="w-3.5 h-3.5 text-slate-500 hidden sm:block" />
               </button>
@@ -289,7 +295,13 @@ export const Navbar: React.FC = () => {
                       <img
                         src={currentUser.avatar}
                         alt={currentUser.name}
-                        className="w-11 h-11 rounded-full object-cover border border-indigo-200"
+                        referrerPolicy="no-referrer"
+                        className="w-11 h-11 rounded-full object-cover border border-indigo-200 bg-slate-100"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=100`;
+                        }}
                       />
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-1.5 flex-wrap">

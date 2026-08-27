@@ -40,6 +40,9 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false);
+
+  const isLongDescription = activity.description && (activity.description.length > 150 || activity.description.split('\n').length > 2);
 
   const handleAddComment = (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,9 +193,17 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
             className="flex items-center gap-3 cursor-pointer group"
           >
             <img
-              src={activity.author.avatar}
+              src={activity.author.name?.toLowerCase().includes('jayamurugan') 
+                ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
+                : (isAuthor ? currentUser.avatar : activity.author.avatar)}
               alt={activity.author.name}
-              className="w-11 h-11 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-indigo-400 transition-all"
+              referrerPolicy="no-referrer"
+              className="w-11 h-11 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-indigo-400 transition-all bg-slate-100"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activity.author.name || 'User')}&background=random&color=fff&size=100`;
+              }}
             />
             <div>
               <div className="flex items-center gap-1.5">
@@ -212,9 +223,19 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
           <h3 className="text-base sm:text-lg font-bold text-slate-900 leading-snug">
             {activity.title}
           </h3>
-          <p className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
-            {activity.description}
-          </p>
+          <div className="text-sm text-slate-600 leading-relaxed whitespace-pre-line">
+            <div className={!isDescriptionExpanded && isLongDescription ? "line-clamp-2" : ""}>
+              {activity.description}
+            </div>
+            {isLongDescription && (
+              <button
+                onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                className="text-slate-500 font-bold hover:text-indigo-600 mt-0.5 cursor-pointer transition-colors text-xs"
+              >
+                {isDescriptionExpanded ? 'show less' : '...read more'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Dynamic Activity Metadata Embeds */}
@@ -396,7 +417,13 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
             <img
               src={currentUser.avatar}
               alt={currentUser.name}
-              className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0"
+              referrerPolicy="no-referrer"
+              className="w-8 h-8 rounded-full object-cover border border-slate-200 shrink-0 bg-slate-100"
+              onError={(e) => {
+                const target = e.target as HTMLImageElement;
+                target.onerror = null;
+                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=100`;
+              }}
             />
             <input
               type="text"
@@ -422,9 +449,17 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
               activity.comments.map((comm) => (
                 <div key={comm.id} className="flex gap-2.5 bg-white p-3 rounded-xl border border-slate-150 text-xs">
                   <img
-                    src={comm.author.avatar}
+                    src={comm.author.name?.toLowerCase().includes('jayamurugan') 
+                      ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
+                      : (comm.author.name === currentUser.name || (comm as any).userId === currentUser.id ? currentUser.avatar : comm.author.avatar)}
                     alt={comm.author.name}
-                    className="w-7 h-7 rounded-full object-cover shrink-0"
+                    referrerPolicy="no-referrer"
+                    className="w-7 h-7 rounded-full object-cover shrink-0 bg-slate-100"
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      target.onerror = null;
+                      target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(comm.author.name || 'User')}&background=random&color=fff&size=100`;
+                    }}
                   />
                   <div className="flex-1">
                     <div className="flex items-center justify-between">

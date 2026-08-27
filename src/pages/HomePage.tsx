@@ -221,7 +221,13 @@ export const HomePage: React.FC = () => {
               <img
                 src={currentUser.avatar}
                 alt={currentUser.name}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-600 shadow-md mx-auto"
+                referrerPolicy="no-referrer"
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-600 shadow-md mx-auto bg-slate-100"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=120`;
+                }}
               />
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center" title="Online & Active">
                 <CheckCircle2 className="w-3 h-3 text-white" />
@@ -401,7 +407,12 @@ export const HomePage: React.FC = () => {
                       <img
                         src={person.photoURL || person.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80'}
                         alt={person.name}
-                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 bg-slate-100"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name || 'User')}&background=random&color=fff&size=100`;
+                        }}
                       />
                       <div className="min-w-0">
                         <h5 className="text-xs font-bold text-slate-900 truncate hover:text-indigo-600">{person.name}</h5>

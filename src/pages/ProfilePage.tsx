@@ -191,7 +191,13 @@ export const ProfilePage: React.FC = () => {
               <img
                 src={profile.avatar}
                 alt={profile.name}
-                className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-white"
+                referrerPolicy="no-referrer"
+                className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-slate-100"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=random&color=fff&size=150`;
+                }}
               />
               <div className="absolute bottom-1 right-1 p-1.5 bg-indigo-600 rounded-full text-white ring-2 ring-white" title="Verified THENAM Student">
                 <ShieldCheck className="w-4 h-4" />

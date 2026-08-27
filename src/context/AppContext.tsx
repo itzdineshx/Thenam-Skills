@@ -141,7 +141,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       location: currentUserProfile.collegeLocation 
         ? `${currentUserProfile.collegeLocation.city}, ${currentUserProfile.collegeLocation.state}` 
         : currentUserProfile.location || 'Chennai, India',
-      avatar: currentUserProfile.photoURL || currentUserProfile.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+      avatar: currentUserProfile.name?.toLowerCase().includes('jayamurugan') 
+        ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg' 
+        : (currentUserProfile.photoURL || currentUserProfile.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80'),
       coverImage: currentUserProfile.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
       bio: currentUserProfile.bio || 'THENAM student building professional identity.',
       email: currentUserProfile.email || '',
