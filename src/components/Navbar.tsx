@@ -87,7 +87,10 @@ export const Navbar: React.FC = () => {
 
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-lg border-b border-slate-200/60 shadow-[0_2px_20px_-3px_rgba(99,102,241,0.03)] transition-all">
+      {/* Decorative gradient border bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 opacity-70" />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           
@@ -96,18 +99,18 @@ export const Navbar: React.FC = () => {
             <button
               id="navbar-brand-logo"
               onClick={() => navigate('/home')}
-              className="flex items-center gap-2.5 text-left group focus:outline-hidden"
+              className="flex items-center gap-2.5 text-left group focus:outline-hidden hover:opacity-95 transition-opacity"
             >
               <img 
                 src="/logo.jpg" 
                 alt="Thenam Campus Logo" 
-                className="w-10 h-10 rounded-xl object-cover shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform"
+                className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-500/15 border border-slate-200/50 group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
-                <span className="text-lg font-extrabold tracking-tight text-slate-900 leading-tight">
-                  Thenam <span className="text-indigo-600 font-black">Campus</span>
+                <span className="text-lg font-black tracking-tight text-slate-900 leading-tight">
+                  Thenam <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Campus</span>
                 </span>
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+                <span className="text-[9px] font-black text-indigo-600/80 uppercase tracking-widest leading-none mt-0.5">
                   Verified Ecosystem
                 </span>
               </div>
@@ -127,12 +130,12 @@ export const Navbar: React.FC = () => {
               placeholder="Search courses, skills, peers, projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9.5 pr-4 py-1.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-hidden transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/80 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-hidden transition-all duration-300"
             />
           </form>
 
           {/* Desktop Nav Items */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPath === item.path || (item.path !== '/home' && currentPath.startsWith(item.path));
@@ -141,10 +144,10 @@ export const Navbar: React.FC = () => {
                   key={item.path}
                   id={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-700 font-bold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-gradient-to-r from-indigo-50 to-indigo-100/30 text-indigo-700 border border-indigo-200/50 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-500'}`} />
@@ -273,7 +276,7 @@ export const Navbar: React.FC = () => {
               <button
                 id="navbar-profile-dropdown-btn"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-indigo-200 transition-all focus:outline-hidden"
+                className="flex items-center gap-2 p-1 rounded-full hover:ring-4 hover:ring-indigo-500/15 active:scale-95 transition-all focus:outline-hidden"
               >
                 <img
                   src={currentUser.avatar}

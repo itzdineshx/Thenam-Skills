@@ -20,6 +20,7 @@ import { CertificateDetailPage } from './pages/CertificateDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { EventsPage } from './pages/EventsPage';
 import { EventPlayerPage } from './pages/EventPlayerPage';
+import { EventDetailPage } from './pages/EventDetailPage';
 import { CommunitiesPage } from './pages/CommunitiesPage';
 import { TalentPage } from './pages/TalentPage';
 import { AchievementsPage } from './pages/AchievementsPage';
@@ -101,6 +102,10 @@ const AppContent: React.FC = () => {
     if (path.startsWith('/events')) {
       if (path.includes('/learn')) {
         return <EventPlayerPage />;
+      }
+      const parts = currentPath.split('/');
+      if (parts[2] && parts[2].trim() !== '') {
+        return <EventDetailPage />;
       }
       return <EventsPage />;
     }

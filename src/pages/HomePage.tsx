@@ -151,16 +151,16 @@ export const HomePage: React.FC = () => {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
       
       {/* Top Banner: Student Greeting & Learning Continuation */}
-      <div className="bg-gradient-to-r from-indigo-900 via-indigo-800 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      <div className="bg-gradient-to-r from-slate-950 via-indigo-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden border border-slate-800/80">
         {/* Background decorative elements */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
+        <div className="absolute -top-12 -right-12 w-96 h-96 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none animate-pulse" />
+        <div className="absolute -bottom-12 -left-12 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-2 max-w-xl">
+          <div className="space-y-2.5 max-w-xl">
             <div className="flex items-center gap-2">
-              <span className="inline-flex items-center gap-1 text-[11px] font-extrabold uppercase tracking-widest bg-indigo-500/30 text-indigo-200 px-3 py-1 rounded-full border border-indigo-400/30">
-                <Flame className="w-3.5 h-3.5 text-amber-400" />
+              <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest bg-indigo-500/10 text-indigo-300 px-3.5 py-1 rounded-full border border-indigo-500/20">
+                <Flame className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
                 {currentUser.metrics.streakDays} Day Learning Streak
               </span>
             </div>
@@ -169,36 +169,36 @@ export const HomePage: React.FC = () => {
               Welcome back, {currentUser.name}! 👋
             </h1>
             
-            <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-300 leading-relaxed font-medium">
               Continue your verified engineering pathway. Your journey to industry-grade skills starts right here at <strong className="text-white font-bold">THENAM CAMPUS</strong>.
             </p>
           </div>
 
           {/* Quick Learning Progress Card */}
           {activeCourse && (
-            <div className="w-full lg:w-96 bg-white/10 backdrop-blur-md rounded-2xl p-4.5 border border-white/15 space-y-3 shrink-0">
+            <div className="w-full lg:w-96 bg-slate-900/60 backdrop-blur-md rounded-2xl p-5 border border-white/10 space-y-3.5 shrink-0 shadow-lg hover:border-white/15 transition-all">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold uppercase tracking-wider text-indigo-200">Active Course</span>
-                <span className="text-xs font-black text-amber-400">{activeCourse.progress}% Complete</span>
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-indigo-300">Active Learning Route</span>
+                <span className="text-[10px] font-black text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md border border-amber-500/20">{activeCourse.progress}% Complete</span>
               </div>
 
-              <h4 className="text-sm font-bold text-white line-clamp-1">{activeCourse.title}</h4>
+              <h4 className="text-xs font-bold text-white line-clamp-1">{activeCourse.title}</h4>
               
-              <div className="w-full h-2 bg-white/20 rounded-full overflow-hidden">
+              <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-linear-to-r from-amber-400 to-orange-400 rounded-full transition-all duration-500"
+                  className="h-full bg-gradient-to-r from-amber-400 to-orange-500 rounded-full transition-all duration-500"
                   style={{ width: `${activeCourse.progress}%` }}
                 />
               </div>
 
               <div className="flex items-center justify-between pt-1">
-                <span className="text-[11px] text-indigo-200">
+                <span className="text-[10px] text-slate-400 font-semibold">
                   {activeCourse.completedModules}/{activeCourse.totalModules} modules finished
                 </span>
                 <button
                   id="btn-home-continue-learning"
                   onClick={() => navigate(`/course/${activeCourse.id}/learn`)}
-                  className="flex items-center gap-1 px-3 py-1.5 bg-white text-indigo-900 hover:bg-indigo-50 text-xs font-bold rounded-lg transition-colors shadow-xs"
+                  className="flex items-center gap-1 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-lg transition-colors shadow-xs hover:scale-[1.02] active:scale-[0.98] transition-all cursor-pointer"
                 >
                   <span>Continue</span>
                   <ChevronRight className="w-3.5 h-3.5" />
@@ -216,56 +216,58 @@ export const HomePage: React.FC = () => {
         <aside className="lg:col-span-3 space-y-4">
           
           {/* Student Profile Snapshot Card */}
-          <div className="bg-white rounded-3xl border border-slate-200 p-5 shadow-xs text-center space-y-3">
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] text-center space-y-4 hover:shadow-[0_6px_25px_-5px_rgba(0,0,0,0.04)] hover:-translate-y-0.5 transition-all duration-300">
             <div className="relative inline-block">
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                referrerPolicy="no-referrer"
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-600 shadow-md mx-auto bg-slate-100"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=120`;
-                }}
-              />
-              <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center" title="Online & Active">
-                <CheckCircle2 className="w-3 h-3 text-white" />
+              <div className="p-1 rounded-3xl bg-gradient-to-tr from-indigo-500 via-purple-500 to-amber-500 shadow-md">
+                <img
+                  src={currentUser.avatar}
+                  alt={currentUser.name}
+                  referrerPolicy="no-referrer"
+                  className="w-20 h-20 rounded-2xl object-cover bg-white mx-auto"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=120`;
+                  }}
+                />
+              </div>
+              <div className="absolute -bottom-1 -right-1 w-5.5 h-5.5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center shadow-xs" title="Online & Active">
+                <span className="w-1.5 h-1.5 bg-white rounded-full animate-ping" />
               </div>
             </div>
 
-            <div>
+            <div className="space-y-1">
               <div className="flex items-center justify-center gap-1.5">
-                <h3 className="text-base font-bold text-slate-900">{currentUser.name}</h3>
-                <CheckCircle2 className="w-4 h-4 text-indigo-600" />
+                <h3 className="text-base font-black text-slate-900 tracking-tight">{currentUser.name}</h3>
+                <ShieldCheck className="w-4.5 h-4.5 text-indigo-600 fill-indigo-50" />
               </div>
-              <p className="text-xs font-semibold text-indigo-600">{currentUser.headline}</p>
-              <p className="text-[11px] text-slate-500 font-medium">{currentUser.college}</p>
+              <p className="text-xs font-bold text-indigo-600 tracking-wide">{currentUser.headline}</p>
+              <p className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider">{currentUser.college}</p>
             </div>
 
             {/* Metrics Breakdown */}
-            <div className="grid grid-cols-2 gap-2 pt-3 border-t border-slate-100 text-left">
-              <div className="bg-slate-50 p-2.5 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Verified Certs</span>
-                <span className="text-base font-black text-amber-600">{currentUser.metrics.certificatesCount}</span>
+            <div className="grid grid-cols-2 gap-2 pt-4 border-t border-slate-100 text-left">
+              <div className="bg-slate-50/70 hover:bg-amber-50/40 p-2.5 rounded-2xl border border-slate-100/50 hover:border-amber-200/40 transition-all duration-200 group">
+                <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider">Certs Earned</span>
+                <span className="text-base font-black text-slate-800 group-hover:text-amber-600 transition-colors">{currentUser.metrics.certificatesCount}</span>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Projects</span>
-                <span className="text-base font-black text-indigo-600">{currentUser.metrics.projectsCount}</span>
+              <div className="bg-slate-50/70 hover:bg-indigo-50/40 p-2.5 rounded-2xl border border-slate-100/50 hover:border-indigo-200/40 transition-all duration-200 group">
+                <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider">Projects</span>
+                <span className="text-base font-black text-slate-800 group-hover:text-indigo-600 transition-colors">{currentUser.metrics.projectsCount}</span>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Network</span>
-                <span className="text-base font-black text-slate-800">{currentUser.metrics.networkCount}</span>
+              <div className="bg-slate-50/70 hover:bg-purple-50/40 p-2.5 rounded-2xl border border-slate-100/50 hover:border-purple-200/40 transition-all duration-200 group">
+                <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider">Network</span>
+                <span className="text-base font-black text-slate-800 group-hover:text-purple-600 transition-colors">{currentUser.metrics.networkCount}</span>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-xl">
-                <span className="text-[10px] text-slate-400 font-bold uppercase block">Skill XP</span>
-                <span className="text-base font-black text-emerald-600">{currentUser.metrics.xpPoints}</span>
+              <div className="bg-slate-50/70 hover:bg-emerald-50/40 p-2.5 rounded-2xl border border-slate-100/50 hover:border-emerald-200/40 transition-all duration-200 group">
+                <span className="text-[9px] text-slate-400 font-extrabold uppercase block tracking-wider">XP Points</span>
+                <span className="text-base font-black text-slate-800 group-hover:text-emerald-600 transition-colors">{currentUser.metrics.xpPoints}</span>
               </div>
             </div>
 
             <button
               onClick={() => navigate(`/profile/${currentUser.id}`)}
-              className="w-full py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-bold rounded-xl transition-colors"
+              className="w-full py-2.5 bg-indigo-50 hover:bg-indigo-100 text-indigo-750 text-xs font-extrabold rounded-xl transition-all duration-200 hover:scale-[1.01]"
             >
               Open Full Portfolio
             </button>
@@ -301,17 +303,17 @@ export const HomePage: React.FC = () => {
           <CreatePostWidget />
 
           {/* Activity Category Filters */}
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
             {filterTabs.map((tab) => {
               const isActive = activeFilter === tab.value;
               return (
                 <button
                   key={tab.value}
                   onClick={() => setActiveFilter(tab.value)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                  className={`px-4 py-2 rounded-xl text-xs font-extrabold transition-all duration-200 whitespace-nowrap cursor-pointer flex items-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] ${
                     isActive
-                      ? 'bg-indigo-600 text-white shadow-xs'
-                      : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/10'
+                      : 'bg-white text-slate-600 hover:text-slate-900 border border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <span>{tab.label}</span>

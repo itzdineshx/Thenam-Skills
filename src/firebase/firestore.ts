@@ -192,6 +192,20 @@ export const createEventInFirestore = async (eventData: any): Promise<void> => {
   }
 };
 
+export const updateEventInFirestore = async (eventId: string, eventData: any): Promise<void> => {
+  try {
+    const docRef = doc(db, 'events', eventId);
+    const sanitizedData = JSON.parse(JSON.stringify(eventData));
+    await updateDoc(docRef, {
+      ...sanitizedData,
+      updatedAt: serverTimestamp()
+    });
+  } catch (error) {
+    console.error('Error updating event in Firestore:', error);
+    throw error;
+  }
+};
+
 export const subscribeToEvents = (onData: (events: any[]) => void, onError: (error: any) => void) => {
   const q = query(collection(db, 'events'), orderBy('createdAt', 'desc'));
   

@@ -27,7 +27,7 @@ import { INITIAL_COMMUNITIES } from '../mock/communities';
 import { useAuth } from './AuthContext';
 import { api } from '../services/api';
 import { socket } from '../services/socket';
-import { createEventInFirestore, subscribeToEvents, toggleEventRegistration as toggleEventRegistrationInFirestore, deleteEvent as deleteEventInFirestore } from '../firebase/firestore';
+import { createEventInFirestore, updateEventInFirestore, subscribeToEvents, toggleEventRegistration as toggleEventRegistrationInFirestore, deleteEvent as deleteEventInFirestore } from '../firebase/firestore';
 
 interface AutomationPayload {
   title: string;
@@ -107,6 +107,7 @@ interface AppContextType {
 
   // New Features
   createEvent: (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => Promise<void>;
+  updateEvent: (eventId: string, eventData: Partial<EventItem>) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
   toggleFollowEducator: (educatorId: string) => void;
 }
@@ -920,6 +921,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Event created successfully and broadcasted globally!');
   };
 
+  const updateEvent = async (eventId: string, eventData: Partial<EventItem>) => {
+    try {
+      await updateEventInFirestore(eventId, eventData);
+      showToast('Event updated successfully!');
+    } catch (err) {
+      console.error('Failed to update event in Firestore:', err);
+      showToast('Error updating event.');
+      throw err;
+    }
+  };
+
   const deleteEvent = async (eventId: string) => {
     const event = events.find(ev => ev.id === eventId);
     if (!event) return;
@@ -1101,6 +1113,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toastMessage,
         showToast,
         createEvent,
+        updateEvent,
         deleteEvent,
         toggleFollowEducator
       }}

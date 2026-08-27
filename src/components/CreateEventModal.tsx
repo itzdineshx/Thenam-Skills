@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { X, Calendar, Clock, MapPin, Users, Image as ImageIcon, Briefcase, Award, Loader2, Plus, Trash2, Video, Link as LinkIcon } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { Module } from '../types';
+import { Module, EventItem } from '../types';
 import { getYouTubeEmbedData } from '../utils/youtube';
 import { storageService } from '../firebase/storage';
+import { useEffect } from 'react';
 
 interface CreateEventModalProps {
   isOpen: boolean;
   onClose: () => void;
+  eventToEdit?: EventItem;
 }
 
-export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose }) => {
-  const { currentUser, createEvent, showToast } = useApp();
+export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose, eventToEdit }) => {
+  const { currentUser, createEvent, updateEvent, showToast } = useApp();
   const [loading, setLoading] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>('');
@@ -31,6 +33,50 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
     certificateOffered: true,
     modules: [] as Partial<Module>[]
   });
+
+  useEffect(() => {
+    if (eventToEdit) {
+      setFormData({
+        title: eventToEdit.title || '',
+        type: eventToEdit.type || 'workshop',
+        mode: (eventToEdit.mode as any) || 'live_scheduled',
+        domain: eventToEdit.domain || '',
+        date: eventToEdit.date || '',
+        time: eventToEdit.time || '',
+        duration: eventToEdit.duration || '',
+        description: evDescriptionClean(eventToEdit.description) || '',
+        maxCapacity: eventToEdit.maxCapacity || 100,
+        coverImage: eventToEdit.coverImage || '',
+        meetingLink: eventToEdit.meetingLink || '',
+        certificateOffered: eventToEdit.certificateOffered !== false,
+        modules: eventToEdit.modules || []
+      });
+      setCoverImagePreview(eventToEdit.coverImage || '');
+    } else {
+      setFormData({
+        title: '',
+        type: 'workshop',
+        mode: 'live_scheduled',
+        domain: '',
+        date: '',
+        time: '',
+        duration: '',
+        description: '',
+        maxCapacity: 100,
+        coverImage: '',
+        meetingLink: '',
+        certificateOffered: true,
+        modules: []
+      });
+      setCoverImagePreview('');
+      setCoverImageFile(null);
+    }
+  }, [eventToEdit, isOpen]);
+
+  function evDescriptionClean(desc: string) {
+    if (!desc) return '';
+    return desc.replace(/\*\*/g, '').replace(/\*/g, '').replace(/__/g, '').replace(/`/g, '');
+  }
 
   if (!isOpen) return null;
 
@@ -101,7 +147,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         finalCoverImage = await storageService.uploadEventCover(tempId, coverImageFile);
       }
 
-      createEvent({
+      const eventPayload = {
         title: formData.title,
         type: formData.type,
         mode: formData.mode,
@@ -117,14 +163,22 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         certificateOffered: formData.certificateOffered,
         certificateEnabled: formData.certificateOffered,
         modules: finalModules,
-        speaker: {
-          name: currentUser.name,
-          role: currentUser.headline,
-          company: currentUser.college,
-          avatar: currentUser.avatar
-        },
-        agenda: []
-      });
+      };
+
+      if (eventToEdit) {
+        await updateEvent(eventToEdit.id, eventPayload);
+      } else {
+        await createEvent({
+          ...eventPayload,
+          speaker: {
+            name: currentUser.name,
+            role: currentUser.headline,
+            company: currentUser.college,
+            avatar: currentUser.avatar
+          },
+          agenda: []
+        });
+      }
       onClose();
     } catch (err) {
       console.error(err);
