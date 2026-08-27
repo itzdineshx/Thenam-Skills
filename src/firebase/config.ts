@@ -1,7 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
+import { getFirestore, initializeFirestore, persistentLocalCache, persistentSingleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
 export const firebaseConfig = {
@@ -15,13 +15,28 @@ export const firebaseConfig = {
 };
 
 export const app = initializeApp(firebaseConfig);
-// Analytics might not be supported in some environments (like dev without proper config), so it's good to keep it optional or just export it.
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const auth = getAuth(app);
-export const db = initializeFirestore(app, {
-  localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
-});
+
+// Use persistentSingleTabManager to prevent multi-tab IndexedDB lock conflicts
+// and "The database is closing/hidden" errors when Google OAuth popup opens/closes.
+let dbInstance;
+try {
+  dbInstance = initializeFirestore(app, {
+    localCache: persistentLocalCache({ tabManager: persistentSingleTabManager({ forceOwnership: false }) })
+  });
+} catch (e) {
+  console.warn('Fallback to standard getFirestore:', e);
+  dbInstance = getFirestore(app);
+}
+
+export const db = dbInstance;
 export const storage = getStorage(app);
 
 export const isFirebaseConfigured = true;
+
 export const googleProvider = new GoogleAuthProvider();
+googleProvider.setCustomParameters({
+  prompt: 'select_account'
+});
+

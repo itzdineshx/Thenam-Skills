@@ -19,6 +19,10 @@ export default function LoginPage() {
       if (err.code === 'auth/unauthorized-domain') {
         const currentDomain = window.location.hostname;
         setError(`This domain (${currentDomain}) is not authorized for Google Sign-In. Please add it to the Authorized Domains list in your Firebase Console.`);
+      } else if (err.code === 'auth/popup-closed-by-user') {
+        setError('Sign-in popup was closed before completing authentication. Please try again.');
+      } else if (err.code === 'auth/cancelled-popup-request') {
+        // Popup was superseded by another popup trigger
       } else {
         const errorMessage = err.message || 'Google Authentication failed.';
         setError(errorMessage.replace('Firebase: ', ''));
