@@ -31,7 +31,7 @@ export const uploadProfileImage = async (uid: string, file: File): Promise<strin
     // 3. Upload to users/{uid}/profile/avatar
     const storageRef = ref(storage, `users/${uid}/profile/avatar`);
     const snapshot = await uploadBytes(storageRef, file);
-    
+
     // 4. Get download URL
     const downloadURL = await getDownloadURL(snapshot.ref);
     return downloadURL;
@@ -65,7 +65,7 @@ export const uploadImage = async (path: string, file: File): Promise<string> => 
 export const storageService = {
   uploadCertificatePdf: async (blob: Blob, path: string) => {
     console.log('[Storage Mock] Uploaded PDF to:', path);
-    return `https://thenamskills.edu/assets/certificates/${path}`;
+    return `https://thenam-campus.vercel.app//assets/certificates/${path}`;
   },
   uploadProjectCover: async (projectId: string, file: File) => {
     return uploadImage(`projects/${projectId}/cover_${Date.now()}`, file);

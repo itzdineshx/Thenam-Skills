@@ -14,7 +14,7 @@ export const INITIAL_CERTIFICATES: Certificate[] = [
     verifiedBy: 'THENAM Academic Certification Board & DMI College of Engineering',
     grade: 'A+ (98.4% Score)',
     skills: ['Deep Learning', 'PyTorch', 'Computer Vision', 'YOLOv9', 'Neural Networks'],
-    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenamskills.edu/verify/THNM-2026-ML-9842',
+    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenam-campus.vercel.app//verify/THNM-2026-ML-9842',
     issuerLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&auto=format&fit=crop&q=80',
     certificateType: 'Course Mastery',
     isVerified: true
@@ -32,7 +32,7 @@ export const INITIAL_CERTIFICATES: Certificate[] = [
     verifiedBy: 'THENAM Academic Certification Board',
     grade: 'A (95.0% Score)',
     skills: ['Python', 'Pandas', 'Scikit-Learn', 'Feature Engineering', 'Data Visualization'],
-    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenamskills.edu/verify/THNM-2026-PY-5419',
+    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenam-campus.vercel.app//verify/THNM-2026-PY-5419',
     issuerLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&auto=format&fit=crop&q=80',
     certificateType: 'Course Mastery',
     isVerified: true
@@ -50,7 +50,7 @@ export const INITIAL_CERTIFICATES: Certificate[] = [
     verifiedBy: 'THENAM Academic Certification Board',
     grade: 'A+ (99.0% Score)',
     skills: ['SQL', 'PostgreSQL', 'Database Design', 'Query Optimization', 'Indexing'],
-    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenamskills.edu/verify/THNM-2026-SQL-3381',
+    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenam-campus.vercel.app//verify/THNM-2026-SQL-3381',
     issuerLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&auto=format&fit=crop&q=80',
     certificateType: 'Course Mastery',
     isVerified: true
@@ -68,7 +68,7 @@ export const INITIAL_CERTIFICATES: Certificate[] = [
     verifiedBy: 'THENAM Workshop Committee & Google Developer Experts',
     grade: 'Honor Roll Participant',
     skills: ['Generative AI', 'RAG Pipelines', 'Vector Databases', 'Gemini Models'],
-    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenamskills.edu/verify/THNM-2026-WS-8192',
+    qrCodeUrl: 'https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=https://thenam-campus.vercel.app//verify/THNM-2026-WS-8192',
     issuerLogo: 'https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?w=100&auto=format&fit=crop&q=80',
     certificateType: 'Workshop Attendance',
     isVerified: true
