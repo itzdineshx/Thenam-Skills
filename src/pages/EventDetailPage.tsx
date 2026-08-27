@@ -258,9 +258,15 @@ export const EventDetailPage: React.FC = () => {
               <img
                 src={ev.speaker.name?.toLowerCase().includes('jayamurugan') 
                   ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
-                  : (isAuthor || currentUser.name === ev.speaker.name ? currentUser.avatar : ev.speaker.avatar)}
+                  : (isAuthor || currentUser.name === ev.speaker.name ? currentUser.avatar : (ev.speaker.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(ev.speaker.name || 'S')}&background=random&color=fff&size=100`))}
                 alt={ev.speaker.name}
-                className="w-16 h-16 rounded-full object-cover border border-slate-200 mx-auto shadow-xs"
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(ev.speaker.name || 'S')}&background=random&color=fff&size=100`;
+                }}
+                className="w-16 h-16 rounded-full object-cover border border-slate-200 mx-auto shadow-xs bg-slate-100"
               />
               <div>
                 <h4 className="text-xs font-extrabold text-slate-900">{ev.speaker.name}</h4>
