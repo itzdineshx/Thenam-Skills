@@ -37,11 +37,22 @@ export const Navbar: React.FC = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     triggerCourseCompletionAutomation,
-    courses
+    courses,
+    events
   } = useApp();
   
   const { currentPath, navigate } = useRouter();
   const { logout } = useAuth();
+
+  // Find the next 2 active/upcoming events to display in notifications
+  const now = new Date().getTime();
+  const activeEvents = events.filter(ev => {
+    const scheduledAt = ev.scheduledAt || (ev.date && ev.time ? `${ev.date}T${ev.time}:00` : '');
+    if (!scheduledAt) return false;
+    const target = new Date(scheduledAt).getTime();
+    // Assuming an event is "active" until 4 hours after its scheduled start time
+    return (target + 4 * 60 * 60 * 1000) > now;
+  }).slice(0, 2);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -187,22 +198,22 @@ export const Navbar: React.FC = () => {
                 title="Notifications"
               >
                 <Bell className="w-5 h-5" />
-                {unreadNotificationsCount > 0 && (
+                {(unreadNotificationsCount > 0 || activeEvents.length > 0) && (
                   <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
-                    {unreadNotificationsCount}
+                    {unreadNotificationsCount + activeEvents.length}
                   </span>
                 )}
               </button>
 
               {/* Notifications Popover */}
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="fixed top-[4.5rem] left-4 right-4 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 w-auto sm:w-96 max-w-none bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 sm:origin-top-right">
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
-                      {unreadNotificationsCount > 0 && (
+                      {(unreadNotificationsCount > 0 || activeEvents.length > 0) && (
                         <span className="text-[11px] font-semibold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">
-                          {unreadNotificationsCount} new
+                          {unreadNotificationsCount + activeEvents.length} new
                         </span>
                       )}
                     </div>
@@ -217,7 +228,35 @@ export const Navbar: React.FC = () => {
                   </div>
 
                   <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length === 0 ? (
+                    {activeEvents.map((ev) => (
+                      <div
+                        key={`event-${ev.id}`}
+                        onClick={() => {
+                          setIsNotifOpen(false);
+                          navigate(`/events/${ev.id}`);
+                        }}
+                        className="p-3.5 bg-purple-50/50 hover:bg-purple-100/50 cursor-pointer transition-colors flex gap-3 items-start border-b border-purple-100/50"
+                      >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-purple-100 text-purple-700">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-purple-600 bg-purple-100/50 px-1.5 py-0.5 rounded">Upcoming Event</span>
+                            {(() => {
+                              const target = new Date(ev.scheduledAt || (ev.date && ev.time ? `${ev.date}T${ev.time}:00` : '')).getTime();
+                              const isLive = target <= now && target + 4 * 60 * 60 * 1000 > now;
+                              return isLive && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />;
+                            })()}
+                          </div>
+                          <p className="text-xs font-bold text-slate-900 leading-tight line-clamp-1">{ev.title}</p>
+                          <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">Live session with {ev.speaker.name}</p>
+                          <span className="text-[10px] font-bold text-purple-600 block mt-1">{ev.date} {ev.time ? `• ${ev.time}` : ''}</span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {notifications.length === 0 && activeEvents.length === 0 ? (
                       <div className="p-6 text-center text-slate-500 text-xs">No notifications yet</div>
                     ) : (
                       notifications.slice(0, 5).map((notif) => (
@@ -377,7 +416,7 @@ export const Navbar: React.FC = () => {
                       </button>
                     )}
 
-                    <button
+                    {/* <button
                       onClick={() => {
                         setIsProfileOpen(false);
                         navigate('/settings');
@@ -386,7 +425,7 @@ export const Navbar: React.FC = () => {
                     >
                       <Sliders className="w-4 h-4 text-slate-400" />
                       <span>Automation & Settings</span>
-                    </button>
+                    </button> */}
                   </div>
 
                   <div className="pt-2 mt-2 border-t border-slate-100 px-2 space-y-0.5">
