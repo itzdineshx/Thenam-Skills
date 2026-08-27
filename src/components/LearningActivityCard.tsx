@@ -59,10 +59,35 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
   };
 
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(`https://thenamskills.edu/feed/${activity.id}`);
+    navigator.clipboard.writeText(`https://thenam-campus.vercel.app//feed/${activity.id}`);
     setCopied(true);
     showToast('Activity link copied to clipboard!');
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleNativeShare = async () => {
+    const shareUrl = `https://thenam-campus.vercel.app//feed/${activity.id}`;
+    const shareTitle = activity.title || `Post by ${activity.author.name}`;
+    const shareText = activity.description ? activity.description.substring(0, 100) + '...' : `Check out this post on Thenam Skills!`;
+
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: shareTitle,
+          text: shareText,
+          url: shareUrl,
+        });
+        showToast('Shared successfully!');
+      } catch (error) {
+        if ((error as Error).name !== 'AbortError') {
+          console.error('Error sharing:', error);
+          setIsShareModalOpen(true);
+        }
+      }
+    } else {
+      // Fallback for browsers that don't support Web Share API
+      setIsShareModalOpen(true);
+    }
   };
 
   // Badges and Theme styles based on Activity Type
@@ -199,7 +224,7 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
             className="flex items-center gap-3 cursor-pointer group"
           >
             <img
-              src={activity.author.name?.toLowerCase().includes('jayamurugan') 
+              src={activity.author.name?.toLowerCase().includes('jayamurugan')
                 ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
                 : (isAuthor ? currentUser.avatar : activity.author.avatar)}
               alt={activity.author.name}
@@ -345,11 +370,10 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
                     key={index}
                     src={url}
                     alt={`Activity image ${index + 1}`}
-                    className={`w-full h-auto max-h-[550px] object-contain rounded-xl ${
-                      activity.metadata!.imageUrls!.length === 3 && index === 0 
-                        ? 'row-span-2' 
+                    className={`w-full h-auto max-h-[550px] object-contain rounded-xl ${activity.metadata!.imageUrls!.length === 3 && index === 0
+                        ? 'row-span-2'
                         : ''
-                    }`}
+                      }`}
                     onError={(e) => {
                       e.currentTarget.onerror = null;
                       e.currentTarget.src = 'https://placehold.co/600x400/e2e8f0/475569?text=Image+Not+Found';
@@ -406,11 +430,10 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
           <button
             id={`btn-like-${activity.id}`}
             onClick={() => toggleLikeActivity(activity.id)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${
-              activity.isLiked
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg transition-colors ${activity.isLiked
                 ? 'text-rose-600 bg-rose-50 font-bold'
                 : 'text-slate-600 hover:bg-slate-100'
-            }`}
+              }`}
           >
             <Heart className={`w-4 h-4 ${activity.isLiked ? 'fill-rose-600 text-rose-600' : ''}`} />
             <span>{activity.likesCount}</span>
@@ -426,7 +449,7 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
           </button>
 
           <button
-            onClick={() => setIsShareModalOpen(true)}
+            onClick={handleNativeShare}
             className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors"
           >
             <Share2 className="w-4 h-4" />
@@ -436,9 +459,8 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
 
         <button
           onClick={() => toggleSaveActivity(activity.id)}
-          className={`p-2 rounded-lg transition-colors ${
-            activity.isSaved ? 'text-indigo-600 bg-indigo-50 font-bold' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
-          }`}
+          className={`p-2 rounded-lg transition-colors ${activity.isSaved ? 'text-indigo-600 bg-indigo-50 font-bold' : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+            }`}
           title="Save Activity"
         >
           <Bookmark className={`w-4 h-4 ${activity.isSaved ? 'fill-indigo-600 text-indigo-600' : ''}`} />
@@ -485,7 +507,7 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
               activity.comments.map((comm) => (
                 <div key={comm.id} className="flex gap-2.5 bg-white p-3 rounded-xl border border-slate-150 text-xs">
                   <img
-                    src={comm.author.name?.toLowerCase().includes('jayamurugan') 
+                    src={comm.author.name?.toLowerCase().includes('jayamurugan')
                       ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
                       : (comm.author.name === currentUser.name || (comm as any).userId === currentUser.id ? currentUser.avatar : comm.author.avatar)}
                     alt={comm.author.name}
@@ -518,7 +540,7 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
           <div className="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl border border-slate-200">
             <h4 className="text-base font-bold text-slate-900">Share Learning Activity</h4>
             <p className="text-xs text-slate-500">Spread verified peer achievements across professional channels.</p>
-            
+
             <div className="space-y-2">
               <button
                 onClick={handleCopyLink}
@@ -551,9 +573,9 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
       )}
 
       {isModalOpen && (
-        <ActivityModal 
-          activity={activity} 
-          onClose={() => setIsModalOpen(false)} 
+        <ActivityModal
+          activity={activity}
+          onClose={() => setIsModalOpen(false)}
         />
       )}
     </article>
