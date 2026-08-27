@@ -39,13 +39,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const mockEducatorLogin = () => {
     const mockProfile: StudentProfile = {
       id: 'mock_educator_jayamurugan',
-      name: 'Dr. Jayamurugan',
+      name: 'Jayamurugan',
       headline: 'Senior Educator & AI Specialist',
       college: 'THENAM Campus',
       department: 'Computer Science',
       yearOfStudy: 'Faculty',
       location: 'Chennai, India',
-      avatar: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=400&auto=format&fit=crop&q=80',
+      avatar: 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg',
       coverImage: '',
       bio: 'Educator shaping the future of AI.',
       email: 'jayamurugan@thenam.edu',
@@ -65,12 +65,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       profileCompleted: true,
       isOnboardingCompleted: true
     };
-    localStorage.setItem('mockEducator', JSON.stringify(mockProfile));
+    localStorage.setItem('mockEducator_v2', JSON.stringify(mockProfile));
     setCurrentUserProfile(mockProfile);
   };
 
   useEffect(() => {
-    const mockUser = localStorage.getItem('mockEducator');
+    const mockUser = localStorage.getItem('mockEducator_v2');
     if (mockUser) {
       setCurrentUserProfile(JSON.parse(mockUser));
       setLoading(false);
@@ -108,6 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const handleSignOut = async () => {
     localStorage.removeItem('mockEducator');
+    localStorage.removeItem('mockEducator_v2');
     try {
       await api.post('/auth/logout').catch(() => {});
       await firebaseSignOut(auth);
