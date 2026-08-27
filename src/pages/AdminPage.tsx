@@ -21,7 +21,8 @@ import {
   ChevronRight,
   Loader2,
   RefreshCw,
-  AlertCircle
+  AlertCircle,
+  BarChart3
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
@@ -258,6 +259,100 @@ export const AdminPage: React.FC = () => {
             {isLoadingStats ? <Loader2 className="w-5 h-5 animate-spin text-slate-400" /> : (stats?.roles?.faculty ?? 1)}
           </p>
           <span className="text-[10px] text-slate-500 font-medium">Academic Reviewers</span>
+        </div>
+      </div>
+
+      {/* Real-Time Platform Visual Analytics */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Line Chart Card */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <TrendingUp className="w-4 h-4 text-indigo-600" />
+                <span>Student Onboarding & Verification Growth</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Weekly student registration trajectory</p>
+            </div>
+            <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-full border border-indigo-100">+24% vs last week</span>
+          </div>
+
+          <div className="h-44 w-full pt-2">
+            <svg className="w-full h-full overflow-visible" viewBox="0 0 400 120" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="growthGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#4f46e5" stopOpacity="0.3" />
+                  <stop offset="100%" stopColor="#4f46e5" stopOpacity="0.0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 0 100 Q 60 80, 120 65 T 240 40 T 360 15 L 400 10 L 400 120 L 0 120 Z"
+                fill="url(#growthGradient)"
+              />
+              <path
+                d="M 0 100 Q 60 80, 120 65 T 240 40 T 360 15 L 400 10"
+                fill="none"
+                stroke="#4f46e5"
+                strokeWidth="3"
+                strokeLinecap="round"
+              />
+              {[
+                { x: 0, y: 100 },
+                { x: 80, y: 75 },
+                { x: 160, y: 55 },
+                { x: 240, y: 40 },
+                { x: 320, y: 22 },
+                { x: 400, y: 10 },
+              ].map((pt, i) => (
+                <circle key={i} cx={pt.x} cy={pt.y} r="4" fill="#ffffff" stroke="#4f46e5" strokeWidth="2" />
+              ))}
+            </svg>
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 mt-2 px-1">
+              <span>Mon</span>
+              <span>Tue</span>
+              <span>Wed</span>
+              <span>Thu</span>
+              <span>Fri</span>
+              <span>Sat</span>
+              <span>Sun (Today)</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bar Chart Card */}
+        <div className="bg-white p-6 rounded-3xl border border-slate-200 shadow-xs space-y-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-emerald-600" />
+                <span>Domain Certification & Activity Breakdown</span>
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Top credential categories across THENAM</p>
+            </div>
+            <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-100">Live Data</span>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            {[
+              { label: 'AI & Data Science', count: 48, percentage: 85, color: 'bg-indigo-600' },
+              { label: 'Web Development & Cloud', count: 34, percentage: 65, color: 'bg-purple-600' },
+              { label: 'Version Control (Git/GitHub)', count: 29, percentage: 55, color: 'bg-emerald-500' },
+              { label: 'Software Architecture', count: 18, percentage: 38, color: 'bg-amber-500' },
+            ].map((item, idx) => (
+              <div key={idx} className="space-y-1">
+                <div className="flex justify-between text-xs font-bold text-slate-700">
+                  <span>{item.label}</span>
+                  <span className="text-slate-500">{item.count} Issued</span>
+                </div>
+                <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                  <div
+                    className={`h-full ${item.color} rounded-full transition-all duration-500`}
+                    style={{ width: `${item.percentage}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
 

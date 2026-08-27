@@ -25,7 +25,9 @@ import {
   ArrowRight,
   X,
   GraduationCap,
-  Users
+  Users,
+  Camera,
+  Loader2
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
@@ -52,6 +54,44 @@ export const ProfilePage: React.FC = () => {
   const isOwnProfile = !profileId || profileId === currentUser.id;
   
   const [publicProfile, setPublicProfile] = useState<StudentProfile | null>(null);
+
+  // Direct avatar & cover banner upload state
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [isUploadingCover, setIsUploadingCover] = useState(false);
+  const avatarInputRef = React.useRef<HTMLInputElement>(null);
+  const coverInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleAvatarFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser.id) return;
+    setIsUploadingAvatar(true);
+    try {
+      const url = await uploadProfileImage(currentUser.id, file);
+      await updateCurrentUser({ avatar: url });
+      showToast('Profile photo updated successfully!');
+    } catch (err: any) {
+      console.error('Avatar upload failed:', err);
+      showToast(err.message || 'Failed to upload profile photo');
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  };
+
+  const handleCoverFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !currentUser.id) return;
+    setIsUploadingCover(true);
+    try {
+      const url = await storageService.uploadEventCover(currentUser.id + '_cover', file);
+      await updateCurrentUser({ coverImage: url });
+      showToast('Cover banner updated successfully!');
+    } catch (err: any) {
+      console.error('Cover upload failed:', err);
+      showToast(err.message || 'Failed to upload cover banner');
+    } finally {
+      setIsUploadingCover(false);
+    }
+  };
 
   useEffect(() => {
     if (!isOwnProfile && profileId) {
@@ -244,15 +284,41 @@ export const ProfilePage: React.FC = () => {
           />
           <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/30 to-transparent" />
           
+          <input
+            ref={coverInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleCoverFileSelect}
+            className="hidden"
+          />
+          <input
+            ref={avatarInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleAvatarFileSelect}
+            className="hidden"
+          />
+
           <div className="absolute top-4 right-4 flex flex-wrap items-center gap-2">
             {isOwnProfile && (
-              <button
-                onClick={() => setIsEditProfileOpen(true)}
-                className="px-3.5 py-1.5 bg-slate-950/40 hover:bg-slate-950/60 text-white rounded-xl backdrop-blur-md text-xs font-bold border border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
-              >
-                <Edit3 className="w-3.5 h-3.5" />
-                <span>Edit Profile</span>
-              </button>
+              <>
+                <button
+                  onClick={() => coverInputRef.current?.click()}
+                  disabled={isUploadingCover}
+                  className="px-3.5 py-1.5 bg-slate-950/40 hover:bg-slate-950/60 text-white rounded-xl backdrop-blur-md text-xs font-bold border border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  title="Change Banner Image"
+                >
+                  {isUploadingCover ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Camera className="w-3.5 h-3.5" />}
+                  <span>{isUploadingCover ? 'Uploading...' : 'Change Cover'}</span>
+                </button>
+                <button
+                  onClick={() => setIsEditProfileOpen(true)}
+                  className="px-3.5 py-1.5 bg-slate-950/40 hover:bg-slate-950/60 text-white rounded-xl backdrop-blur-md text-xs font-bold border border-white/20 transition-colors flex items-center gap-1.5 cursor-pointer"
+                >
+                  <Edit3 className="w-3.5 h-3.5" />
+                  <span>Edit Profile</span>
+                </button>
+              </>
             )}
             <button
               onClick={handleShareProfile}
@@ -276,7 +342,7 @@ export const ProfilePage: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-4">
             
             {/* Avatar */}
-            <div className="relative">
+            <div className="relative group">
               <img
                 src={profile.avatar}
                 alt={profile.name}
@@ -288,6 +354,23 @@ export const ProfilePage: React.FC = () => {
                   target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=random&color=fff&size=150`;
                 }}
               />
+              {isOwnProfile && (
+                <button
+                  onClick={() => avatarInputRef.current?.click()}
+                  disabled={isUploadingAvatar}
+                  className="absolute inset-0 rounded-3xl bg-slate-950/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white backdrop-blur-xs cursor-pointer disabled:opacity-100"
+                  title="Change Profile Photo"
+                >
+                  {isUploadingAvatar ? (
+                    <Loader2 className="w-6 h-6 animate-spin" />
+                  ) : (
+                    <>
+                      <Camera className="w-6 h-6 mb-1" />
+                      <span className="text-[10px] font-bold">Upload Photo</span>
+                    </>
+                  )}
+                </button>
+              )}
               <div className={`absolute bottom-1 right-1 p-1.5 rounded-full text-white ring-2 ring-white ${isFaculty ? 'bg-amber-500' : 'bg-indigo-600'}`} title={isFaculty ? "Verified THENAM Educator" : "Verified THENAM Student"}>
                 {isFaculty ? <Award className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
               </div>

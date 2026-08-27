@@ -22,7 +22,9 @@ import {
   X,
   ExternalLink,
   Layers,
-  Link
+  Link,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
@@ -38,11 +40,32 @@ export const Navbar: React.FC = () => {
     markAllNotificationsAsRead,
     triggerCourseCompletionAutomation,
     courses,
-    events
+    events,
+    showToast
   } = useApp();
   
   const { currentPath, navigate } = useRouter();
   const { logout } = useAuth();
+
+  // Dark mode theme state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('thenam_theme') === 'dark' || document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('thenam_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('thenam_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    showToast(!isDarkMode ? 'Dark theme activated!' : 'Light theme activated!');
+  };
 
   // Find the next 2 active/upcoming events to display in notifications
   const now = new Date().getTime();
@@ -157,7 +180,7 @@ export const Navbar: React.FC = () => {
                   onClick={() => navigate(item.path)}
                   className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                     isActive
-                      ? 'bg-gradient-to-r from-indigo-50 to-indigo-100/30 text-indigo-700 border border-indigo-200/50 shadow-xs'
+                      ? 'bg-gradient-to-r from-indigo-70 to-indigo-100/30 text-indigo-700 border border-indigo-200/50 shadow-xs'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'
                   }`}
                 >
@@ -171,21 +194,14 @@ export const Navbar: React.FC = () => {
           {/* Right Action Icons & Profile */}
           <div className="flex items-center gap-2 sm:gap-3">
             
-
-            {/* Bond Network (Hidden for now) */}
-            {false && (
-              <button
-                id="navbar-bond-btn"
-                onClick={() => navigate('/bond')}
-                className={`relative p-2 rounded-lg transition-colors ${
-                  currentPath === '/bond' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
-                }`}
-                title="Campus Bond"
-              >
-                <Link className="w-5 h-5" />
-                <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
-              </button>
-            )}
+            {/* Theme Toggle Button */}
+            <button
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
+            >
+              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
+            </button>
 
             {/* Notifications Menu */}
             <div className="relative" ref={notifRef}>

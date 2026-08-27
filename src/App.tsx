@@ -98,7 +98,7 @@ const AppContent: React.FC = () => {
       return <CertificatesPage />;
     }
     if (path.startsWith('/projects') || path.startsWith('/project/')) {
-      return <OpeningSoonPage />;
+      return <ProjectsPage />;
     }
     if (path.startsWith('/events')) {
       if (path.includes('/learn')) {
@@ -111,7 +111,7 @@ const AppContent: React.FC = () => {
       return <EventsPage />;
     }
     if (path.startsWith('/communities')) {
-      return <OpeningSoonPage />;
+      return <CommunitiesPage />;
     }
     if (path.startsWith('/talent') || path.startsWith('/search')) {
       return <OpeningSoonPage />;
