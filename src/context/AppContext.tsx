@@ -141,7 +141,9 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       location: currentUserProfile.collegeLocation 
         ? `${currentUserProfile.collegeLocation.city}, ${currentUserProfile.collegeLocation.state}` 
         : currentUserProfile.location || 'Chennai, India',
-      avatar: currentUserProfile.photoURL || currentUserProfile.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+      avatar: currentUserProfile.name?.toLowerCase().includes('jayamurugan') 
+        ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg' 
+        : (currentUserProfile.photoURL || currentUserProfile.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80'),
       coverImage: currentUserProfile.coverImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=1200&auto=format&fit=crop&q=80',
       bio: currentUserProfile.bio || 'THENAM student building professional identity.',
       email: currentUserProfile.email || '',
@@ -353,11 +355,11 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
               timestamp: act.createdAt ? new Date(act.createdAt).toLocaleDateString() : 'Just now',
               metadata: metadata,
               author: {
-                id: act.user?.firebaseUid || act.user?.id || '',
-                name: act.user?.name || 'Student',
-                avatar: act.user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
-                headline: `${act.user?.year || 'Student'} - ${act.user?.department || 'Engineering'}`,
-                college: act.user?.collegeName || 'DMI College of Engineering'
+                id: act.author?.id || act.user?.firebaseUid || act.user?.id || (typeof act.user === 'string' ? act.user : '') || '',
+                name: act.author?.name || act.user?.name || 'THENAM Member',
+                avatar: act.author?.avatar || act.user?.photoURL || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=400&auto=format&fit=crop&q=80',
+                headline: act.author?.headline || (act.user?.department ? `${act.user.department} • ${act.user.collegeName || ''}` : 'THENAM Member'),
+                college: act.author?.college || act.user?.collegeName || 'THENAM Campus'
               },
               likesCount: act.likesCount || 0,
               commentsCount: act.commentsCount || 0,
@@ -646,26 +648,28 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
 
   // Activity Feed interactions
   const createActivity = async (activityData: Omit<ActivityItem, 'id' | 'timestamp' | 'likesCount' | 'isLiked' | 'commentsCount' | 'comments' | 'sharesCount'>) => {
-    try {
-      await api.post('/activities', activityData);
-      
-      const newActivity: ActivityItem = {
-        ...activityData,
-        id: `act_${Date.now()}`,
-        timestamp: 'Just now',
-        createdAt: new Date().toISOString(),
-        likesCount: 0,
-        isLiked: false,
-        commentsCount: 0,
-        comments: [],
-        sharesCount: 0
-      };
-      setActivities(prev => [newActivity, ...prev]);
-      showToast('Activity shared with your THENAM network!');
-    } catch (err) {
-      console.error('Failed to create activity:', err);
-      showToast('Failed to publish activity.');
-    }
+    const newActivity: ActivityItem = {
+      ...activityData,
+      id: `act_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      timestamp: 'Just now',
+      createdAt: new Date().toISOString(),
+      likesCount: 0,
+      isLiked: false,
+      commentsCount: 0,
+      comments: [],
+      sharesCount: 0
+    };
+    
+    // Instant optimistic UI update
+    setActivities(prev => [newActivity, ...prev]);
+    showToast('Activity published to THENAM feed!');
+
+    // Async background sync with API (non-blocking)
+    api.post('/activities', activityData).catch(err => {
+      console.error('Failed to sync activity to server:', err);
+    });
+
+    return newActivity;
   };
 
   const toggleLikeActivity = async (activityId: string) => {

@@ -97,14 +97,16 @@ const EventCard: React.FC<{
           </h3>
 
           <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
-            {ev.description}
+            {ev.description.replace(/\*\*/g, '').replace(/\*/g, '').replace(/__/g, '').replace(/`/g, '')}
           </p>
 
           {/* Speaker */}
           <div className="flex items-center justify-between pt-2 border-t border-slate-100">
             <div className="flex items-center gap-2.5">
               <img
-                src={ev.speaker.avatar}
+                src={ev.speaker.name?.toLowerCase().includes('jayamurugan') 
+                  ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
+                  : (isAuthor || currentUser.name === ev.speaker.name ? currentUser.avatar : ev.speaker.avatar)}
                 alt={ev.speaker.name}
                 className="w-8 h-8 rounded-full object-cover border border-slate-200"
               />

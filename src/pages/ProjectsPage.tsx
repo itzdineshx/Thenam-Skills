@@ -11,11 +11,13 @@ import {
   ArrowLeft,
   X,
   Send,
-  Code
+  Code,
+  Image as ImageIcon
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
 import { Project } from '../types';
+import { storageService } from '../firebase/storage';
 
 export const ProjectsPage: React.FC = () => {
   const { projects, toggleLikeProject, addProject, currentUser, showToast } = useApp();
@@ -38,6 +40,8 @@ export const ProjectsPage: React.FC = () => {
   const [newDemo, setNewDemo] = useState('');
   const [newGithub, setNewGithub] = useState('');
   const [newImage, setNewImage] = useState('');
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [newImagePreview, setNewImagePreview] = useState<string>('');
 
   const tags = ['All', 'PyTorch', 'Computer Vision', 'React', 'FastAPI', 'NLP', 'Blockchain'];
 
@@ -49,11 +53,17 @@ export const ProjectsPage: React.FC = () => {
     return matchesTag && matchesSearch;
   });
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTitle.trim() || !newDesc.trim()) return;
 
     const stack = newTech.split(',').map(s => s.trim()).filter(Boolean);
+    
+    let finalCoverImage = newImage.trim() || 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=800&q=80';
+    if (newImageFile) {
+      const tempId = `temp_${Date.now()}`;
+      finalCoverImage = await storageService.uploadProjectCover(tempId, newImageFile);
+    }
 
     addProject({
       title: newTitle.trim(),
@@ -70,7 +80,7 @@ export const ProjectsPage: React.FC = () => {
       techStack: stack.length > 0 ? stack : ['Python', 'AI'],
       githubUrl: newGithub.trim() || undefined,
       demoUrl: newDemo.trim() || undefined,
-      coverImage: newImage.trim() || 'https://images.unsplash.com/photo-1555949963-aa79dcee981c?auto=format&fit=crop&w=800&q=80'
+      coverImage: finalCoverImage
     });
 
     setIsSubmitModalOpen(false);
@@ -81,6 +91,8 @@ export const ProjectsPage: React.FC = () => {
     setNewDemo('');
     setNewGithub('');
     setNewImage('');
+    setNewImageFile(null);
+    setNewImagePreview('');
   };
 
   // If viewing single project detail
@@ -388,6 +400,58 @@ export const ProjectsPage: React.FC = () => {
                     className="w-full p-2.5 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:border-indigo-500 outline-hidden"
                   />
                 </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">Cover Image</label>
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="relative flex-1">
+                    <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="url"
+                      placeholder="Or enter image URL"
+                      value={newImage}
+                      onChange={(e) => {
+                        setNewImage(e.target.value);
+                        if (e.target.value) setNewImageFile(null);
+                      }}
+                      className="w-full pl-9 pr-3 p-2.5 bg-slate-50 text-xs rounded-xl border border-slate-200 focus:bg-white focus:border-indigo-500 outline-hidden"
+                    />
+                  </div>
+                  <label className="flex items-center justify-center px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-colors whitespace-nowrap">
+                    Upload Image
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            showToast('Cover image must be less than 5 MB.');
+                            return;
+                          }
+                          setNewImageFile(file);
+                          setNewImage('');
+                          const reader = new FileReader();
+                          reader.onloadend = () => setNewImagePreview(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+                
+                {(newImage || newImagePreview) && (
+                  <div className="w-full h-32 rounded-xl overflow-hidden border border-slate-200">
+                    <img 
+                      src={newImage || newImagePreview} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover" 
+                      onError={(e) => (e.target as HTMLImageElement).style.display = 'none'}
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="pt-2 flex items-center justify-end gap-2">

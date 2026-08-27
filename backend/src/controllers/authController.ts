@@ -48,9 +48,9 @@ export const syncUser = asyncHandler(async (req: AuthenticatedRequest, res: Resp
   } else {
     finalUser = { id: userDoc.id, ...userDoc.data() };
     
-    // Sync Google profile photo if Firestore photoURL is currently blank
+    // Sync Google profile photo if it changed
     const updates: any = {};
-    if (!finalUser.photoURL && firebaseUser.photoURL) {
+    if (firebaseUser.photoURL && finalUser.photoURL !== firebaseUser.photoURL) {
       finalUser.photoURL = firebaseUser.photoURL;
       updates.photoURL = firebaseUser.photoURL;
     }

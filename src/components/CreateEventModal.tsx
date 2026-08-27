@@ -3,6 +3,7 @@ import { X, Calendar, Clock, MapPin, Users, Image as ImageIcon, Briefcase, Award
 import { useApp } from '../context/AppContext';
 import { Module } from '../types';
 import { getYouTubeEmbedData } from '../utils/youtube';
+import { storageService } from '../firebase/storage';
 
 interface CreateEventModalProps {
   isOpen: boolean;
@@ -12,6 +13,8 @@ interface CreateEventModalProps {
 export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onClose }) => {
   const { currentUser, createEvent, showToast } = useApp();
   const [loading, setLoading] = useState(false);
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [coverImagePreview, setCoverImagePreview] = useState<string>('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -90,6 +93,14 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
           })
         : undefined;
 
+      let finalCoverImage = formData.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80';
+      
+      if (coverImageFile) {
+        // We don't have the event ID yet, so use a timestamp-based ID
+        const tempId = `temp_${Date.now()}`;
+        finalCoverImage = await storageService.uploadEventCover(tempId, coverImageFile);
+      }
+
       createEvent({
         title: formData.title,
         type: formData.type,
@@ -100,7 +111,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
         duration: formData.duration,
         description: formData.description,
         maxCapacity: Number(formData.maxCapacity),
-        coverImage: formData.coverImage || 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=1200&auto=format&fit=crop&q=80',
+        coverImage: finalCoverImage,
         meetingLink: formData.mode === 'live_scheduled' ? formData.meetingLink : undefined,
         scheduledAt: formData.mode === 'live_scheduled' ? `${formData.date}T${formData.time}` : undefined,
         certificateOffered: formData.certificateOffered,
@@ -321,24 +332,51 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">Cover Image URL</label>
-                <p className="text-[10px] text-slate-500 mb-2">Recommended dimension: 1280 × 720 pixels (16:9 landscape aspect ratio).</p>
-                <div className="relative mb-3">
-                  <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-                  <input
-                    type="url"
-                    placeholder="https://images.unsplash.com/..."
-                    value={formData.coverImage}
-                    onChange={(e) => setFormData({ ...formData, coverImage: e.target.value })}
-                    className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all outline-hidden"
-                  />
+                <label className="block text-xs font-bold text-slate-700 mb-1">Cover Image</label>
+                <p className="text-[10px] text-slate-500 mb-2">Recommended dimension: 1280 × 720 pixels (16:9 landscape aspect ratio). Provide a URL or upload an image.</p>
+                <div className="relative mb-3 flex gap-2">
+                  <div className="relative flex-1">
+                    <ImageIcon className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                    <input
+                      type="url"
+                      placeholder="https://images.unsplash.com/..."
+                      value={formData.coverImage}
+                      onChange={(e) => {
+                        setFormData({ ...formData, coverImage: e.target.value });
+                        if (e.target.value) setCoverImageFile(null); // Clear file if URL is provided
+                      }}
+                      className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:bg-white focus:ring-2 focus:ring-indigo-100 transition-all outline-hidden"
+                    />
+                  </div>
+                  <label className="flex items-center justify-center px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold cursor-pointer transition-colors whitespace-nowrap">
+                    Upload File
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 5 * 1024 * 1024) {
+                            showToast('Cover image must be less than 5 MB.');
+                            return;
+                          }
+                          setCoverImageFile(file);
+                          setFormData({ ...formData, coverImage: '' }); // Clear URL if file is selected
+                          const reader = new FileReader();
+                          reader.onloadend = () => setCoverImagePreview(reader.result as string);
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+                  </label>
                 </div>
                 
                 {/* 16:9 Image Preview */}
                 <div className="w-full aspect-video rounded-xl border border-slate-200 overflow-hidden bg-slate-100 relative">
-                  {formData.coverImage ? (
+                  {(formData.coverImage || coverImagePreview) ? (
                     <img 
-                      src={formData.coverImage} 
+                      src={formData.coverImage || coverImagePreview} 
                       alt="Cover Preview" 
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -347,7 +385,7 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                       }}
                     />
                   ) : null}
-                  <div className={`absolute inset-0 flex flex-col items-center justify-center text-slate-400 ${formData.coverImage ? 'hidden' : ''}`}>
+                  <div className={`absolute inset-0 flex flex-col items-center justify-center text-slate-400 ${(formData.coverImage || coverImagePreview) ? 'hidden' : ''}`}>
                     <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
                     <span className="text-[10px] font-bold uppercase tracking-wider opacity-50">1280 × 720 Preview</span>
                     

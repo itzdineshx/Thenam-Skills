@@ -169,8 +169,8 @@ export const HomePage: React.FC = () => {
               Welcome back, {currentUser.name}! 👋
             </h1>
             
-            <p className="text-xs sm:text-sm text-indigo-100/80 leading-relaxed">
-              Continue your engineering pathway. You are journey is not alone at <strong className="text-white">Thenam campus</strong>.
+            <p className="text-xs sm:text-sm text-indigo-100/90 leading-relaxed">
+              Continue your verified engineering pathway. Your journey to industry-grade skills starts right here at <strong className="text-white font-bold">THENAM CAMPUS</strong>.
             </p>
           </div>
 
@@ -221,7 +221,13 @@ export const HomePage: React.FC = () => {
               <img
                 src={currentUser.avatar}
                 alt={currentUser.name}
-                className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-600 shadow-md mx-auto"
+                referrerPolicy="no-referrer"
+                className="w-20 h-20 rounded-2xl object-cover border-2 border-indigo-600 shadow-md mx-auto bg-slate-100"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(currentUser.name || 'User')}&background=random&color=fff&size=120`;
+                }}
               />
               <div className="absolute -bottom-1 -right-1 w-5 h-5 bg-emerald-500 rounded-full border-2 border-white flex items-center justify-center" title="Online & Active">
                 <CheckCircle2 className="w-3 h-3 text-white" />
@@ -272,23 +278,48 @@ export const HomePage: React.FC = () => {
               <button onClick={() => navigate('/profile/edit')} className="text-xs text-indigo-600 font-semibold hover:underline">Edit</button>
             </div>
             <div className="flex flex-wrap gap-1.5">
-              {currentUser.skills.map((skill) => (
-                <span
-                  key={skill}
-                  className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] font-semibold border border-slate-200/70 transition-colors"
-                >
-                  {skill}
-                </span>
-              ))}
+              {currentUser.skills && currentUser.skills.length > 0 ? (
+                currentUser.skills.map((skill) => (
+                  <span
+                    key={skill}
+                    className="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-indigo-50 hover:text-indigo-700 text-slate-700 text-[11px] font-semibold border border-slate-200/70 transition-colors"
+                  >
+                    {skill}
+                  </span>
+                ))
+              ) : (
+                <p className="text-xs text-slate-400">No skills added yet</p>
+              )}
             </div>
           </div>
-
-          {/* Create Post Widget replacing Simulate Achievement */}
-          <CreatePostWidget />
         </aside>
 
-        {/* Center Col (6 cols on desktop): Learning Activity Feed */}
-        <main className="lg:col-span-6 space-y-4">
+        {/* Center Col (6 cols on desktop): Learning Activity Feed & Composer */}
+        <main className="lg:col-span-6 space-y-5 min-w-0">
+          
+          {/* Post Composer Widget at the Top of Center Feed */}
+          <CreatePostWidget />
+
+          {/* Activity Category Filters */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+            {filterTabs.map((tab) => {
+              const isActive = activeFilter === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setActiveFilter(tab.value)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap cursor-pointer flex items-center gap-1.5 ${
+                    isActive
+                      ? 'bg-indigo-600 text-white shadow-xs'
+                      : 'bg-white text-slate-600 hover:bg-slate-50 border border-slate-200'
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
           {/* Learning Activity Cards Stream */}
           <div className="space-y-4">
             {isFeedLoading ? (
@@ -401,7 +432,12 @@ export const HomePage: React.FC = () => {
                       <img
                         src={person.photoURL || person.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=100&h=100&fit=crop&q=80'}
                         alt={person.name}
-                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                        className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0 bg-slate-100"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.onerror = null;
+                          target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(person.name || 'User')}&background=random&color=fff&size=100`;
+                        }}
                       />
                       <div className="min-w-0">
                         <h5 className="text-xs font-bold text-slate-900 truncate hover:text-indigo-600">{person.name}</h5>

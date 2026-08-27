@@ -20,7 +20,16 @@ export const getActivities = asyncHandler(async (req: Request, res: Response) =>
   if (uids.length > 0) {
     const userRefs = uids.map(uid => db.collection('users').doc(uid));
     const userDocs = await db.getAll(...userRefs);
-    const userMap: Record<string, any> = {};
+    const userMap: Record<string, any> = {
+      'mock_educator_jayamurugan': {
+        id: 'mock_educator_jayamurugan',
+        firebaseUid: 'mock_educator_jayamurugan',
+        name: 'Jayamurugan',
+        photoURL: 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg',
+        department: 'Computer Science',
+        collegeName: 'THENAM Campus'
+      }
+    };
     
     userDocs.forEach(doc => {
       if (doc.exists) {
@@ -41,8 +50,13 @@ export const getActivities = asyncHandler(async (req: Request, res: Response) =>
     activities.forEach((act: any) => {
       if (act.user && userMap[act.user]) {
         act.user = userMap[act.user];
-      } else {
-        act.user = { name: 'Google User', photoURL: '' };
+      } else if (typeof act.user === 'string' && !act.user.startsWith('{')) {
+        act.user = {
+          id: act.user,
+          firebaseUid: act.user,
+          name: 'THENAM Member',
+          photoURL: ''
+        };
       }
     });
   }
@@ -58,10 +72,19 @@ export const createActivity = asyncHandler(async (req: any, res: Response) => {
     return sendResponse(res, 401, false, 'Unauthorized');
   }
 
-  const { type, title, description, badgeText, badgeTheme, metadata } = req.body;
+  const { type, title, description, badgeText, badgeTheme, metadata, author } = req.body;
   
+  const authorData = {
+    id: uid,
+    name: req.user?.name || author?.name || 'THENAM Member',
+    avatar: req.user?.photoURL || author?.avatar || '',
+    headline: req.user?.department ? `${req.user.department} • ${req.user.collegeName || ''}` : (author?.headline || 'THENAM Member'),
+    college: req.user?.collegeName || author?.college || 'THENAM Campus'
+  };
+
   const activityData = {
     user: uid,
+    author: authorData,
     type: type || 'student_post',
     title: title || '',
     description: description || '',

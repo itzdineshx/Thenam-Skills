@@ -35,7 +35,8 @@ import { ConnectModal } from '../components/ConnectModal';
 import { SkillSelector } from '../components/SkillSelector';
 import { StudentProfileForm } from '../components/StudentProfileForm';
 import { LearningActivityCard } from '../components/LearningActivityCard';
-import { uploadProfileImage, uploadEducatorAvatar } from '../firebase/storage';
+import { CreatePostWidget } from '../components/CreatePostWidget';
+import { uploadProfileImage, uploadEducatorAvatar, storageService } from '../firebase/storage';
 
 export const ProfilePage: React.FC = () => {
   const { currentUser, updateCurrentUser, addSkillToProfile, removeSkillFromProfile, certificates, projects, activities, showToast } = useApp();
@@ -97,7 +98,7 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleEditProfileSubmit = async (formData: any, imageFile: File | null) => {
+  const handleEditProfileSubmit = async (formData: any, imageFile: File | null, coverImageFile: File | null) => {
     setEditLoading(true);
     try {
       let finalAvatar = currentUser.avatar;
@@ -109,6 +110,11 @@ export const ProfilePage: React.FC = () => {
         } else {
           finalAvatar = await uploadProfileImage(currentUser.id, imageFile);
         }
+      }
+
+      let finalCoverImage = currentUser.coverImage;
+      if (coverImageFile) {
+        finalCoverImage = await storageService.uploadProfileCover(currentUser.id, coverImageFile);
       }
 
       await updateCurrentUser({
@@ -123,7 +129,8 @@ export const ProfilePage: React.FC = () => {
         linkedinUrl: formData.linkedinURL,
         githubUrl: formData.githubURL,
         location: `${formData.collegeLocation.city}, ${formData.collegeLocation.state}`,
-        collegeLocation: formData.collegeLocation
+        collegeLocation: formData.collegeLocation,
+        coverImage: finalCoverImage || formData.coverImage
       });
 
       setIsEditProfileOpen(false);
@@ -191,7 +198,13 @@ export const ProfilePage: React.FC = () => {
               <img
                 src={profile.avatar}
                 alt={profile.name}
-                className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-white"
+                referrerPolicy="no-referrer"
+                className="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover border-4 border-white shadow-xl bg-slate-100"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=random&color=fff&size=150`;
+                }}
               />
               <div className="absolute bottom-1 right-1 p-1.5 bg-indigo-600 rounded-full text-white ring-2 ring-white" title="Verified THENAM Student">
                 <ShieldCheck className="w-4 h-4" />
@@ -448,16 +461,26 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
+          {isOwnProfile && <CreatePostWidget />}
+
           <div className="space-y-6">
             {activities
-              .filter(act => act.author.id === profile.id)
+              .filter(act => 
+                act.author?.id === profile.id || 
+                (profile.name && act.author?.name?.toLowerCase() === profile.name?.toLowerCase()) ||
+                (profile.id === 'mock_educator_jayamurugan' && act.author?.name?.toLowerCase().includes('jayamurugan'))
+              )
               .sort((a, b) => new Date(b.createdAt || b.timestamp).getTime() - new Date(a.createdAt || a.timestamp).getTime())
               .map(act => (
                 <LearningActivityCard key={act.id} activity={act} />
               ))}
-            {activities.filter(act => act.author.id === profile.id).length === 0 && (
+            {activities.filter(act => 
+                act.author?.id === profile.id || 
+                (profile.name && act.author?.name?.toLowerCase() === profile.name?.toLowerCase()) ||
+                (profile.id === 'mock_educator_jayamurugan' && act.author?.name?.toLowerCase().includes('jayamurugan'))
+              ).length === 0 && (
               <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
-                No activity posts published yet.
+                No activity posts published yet. Use the post widget above to publish your first update!
               </div>
             )}
           </div>
@@ -691,6 +714,7 @@ export const ProfilePage: React.FC = () => {
                   dateOfBirth: currentUser.dateOfBirth,
                   skills: currentUser.skills,
                   avatar: currentUser.avatar,
+                  coverImage: currentUser.coverImage,
                   linkedinUrl: currentUser.linkedinUrl || '',
                   githubUrl: currentUser.githubUrl || '',
                   collegeLocation: currentUser.collegeLocation
