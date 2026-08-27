@@ -35,7 +35,7 @@ import { ConnectModal } from '../components/ConnectModal';
 import { SkillSelector } from '../components/SkillSelector';
 import { StudentProfileForm } from '../components/StudentProfileForm';
 import { LearningActivityCard } from '../components/LearningActivityCard';
-import { uploadProfileImage, uploadEducatorAvatar } from '../firebase/storage';
+import { uploadProfileImage, uploadEducatorAvatar, storageService } from '../firebase/storage';
 
 export const ProfilePage: React.FC = () => {
   const { currentUser, updateCurrentUser, addSkillToProfile, removeSkillFromProfile, certificates, projects, activities, showToast } = useApp();
@@ -97,7 +97,7 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleEditProfileSubmit = async (formData: any, imageFile: File | null) => {
+  const handleEditProfileSubmit = async (formData: any, imageFile: File | null, coverImageFile: File | null) => {
     setEditLoading(true);
     try {
       let finalAvatar = currentUser.avatar;
@@ -109,6 +109,11 @@ export const ProfilePage: React.FC = () => {
         } else {
           finalAvatar = await uploadProfileImage(currentUser.id, imageFile);
         }
+      }
+
+      let finalCoverImage = currentUser.coverImage;
+      if (coverImageFile) {
+        finalCoverImage = await storageService.uploadProfileCover(currentUser.id, coverImageFile);
       }
 
       await updateCurrentUser({
@@ -123,7 +128,8 @@ export const ProfilePage: React.FC = () => {
         linkedinUrl: formData.linkedinURL,
         githubUrl: formData.githubURL,
         location: `${formData.collegeLocation.city}, ${formData.collegeLocation.state}`,
-        collegeLocation: formData.collegeLocation
+        collegeLocation: formData.collegeLocation,
+        coverImage: finalCoverImage || formData.coverImage
       });
 
       setIsEditProfileOpen(false);
@@ -697,6 +703,7 @@ export const ProfilePage: React.FC = () => {
                   dateOfBirth: currentUser.dateOfBirth,
                   skills: currentUser.skills,
                   avatar: currentUser.avatar,
+                  coverImage: currentUser.coverImage,
                   linkedinUrl: currentUser.linkedinUrl || '',
                   githubUrl: currentUser.githubUrl || '',
                   collegeLocation: currentUser.collegeLocation

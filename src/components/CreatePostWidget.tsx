@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { Image, Send, X, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
+import { storageService } from '../firebase/storage';
 
 export const CreatePostWidget: React.FC = () => {
   const { currentUser, createActivity } = useApp();
@@ -81,16 +82,9 @@ export const CreatePostWidget: React.FC = () => {
     if (!content.trim() && images.length === 0) return;
 
     try {
-      // In a real app, upload images to Firebase Storage and get URLs here
-      // For simulation, we convert them to base64 Data URLs so they persist
       const imageUrls = await Promise.all(
-        images.map((img) => {
-          return new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(img.file);
-          });
+        images.map(async (img, idx) => {
+          return await storageService.uploadPostImage(currentUser.id, img.file, idx);
         })
       );
 
