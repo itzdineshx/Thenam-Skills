@@ -148,92 +148,86 @@ export const CreatePostWidget: React.FC = () => {
   const handlePost = async () => {
     if ((!content.trim() && images.length === 0 && !externalLink.trim()) || posting) return;
 
-    // Sanitize and strip markdown formatting and special characters from text content
-    const sanitizedContent = cleanPostContent(content);
-
-    // Snapshot current form data
-    const currentImages = [...images];
-    const currentExternalLink = externalLink.trim();
-    const currentSkillTag = skillTag.trim();
-    const currentPostType = postType;
-
-    // Convert all images to persistent base64 Data URLs BEFORE clearing the form
-    // (blob: URLs from createObjectURL become invalid after revocation/reset)
-    const persistentImageUrls: string[] = await Promise.all(
-      currentImages.map(async (img) => {
-        if (img.uploadedUrl) return img.uploadedUrl; // Already uploaded to cloud
-        return fileToDataUrl(img.file); // Convert to base64
-      })
-    );
-
-    // 1. Reset Form State IMMEDIATELY
-    setContent('');
-    setImages([]);
-    setExternalLink('');
-    setSkillTag('');
-    setShowLinkInput(false);
-    setShowTagInput(false);
+    setPosting(true);
     setError(null);
-    setPosting(false);
 
-    let badgeText = '💭 Student Post';
-    let badgeTheme: 'blue' | 'indigo' | 'emerald' | 'amber' | 'purple' | 'rose' = 'blue';
+    try {
+      const sanitizedContent = cleanPostContent(content);
+      const currentImages = [...images];
+      const currentExternalLink = externalLink.trim();
+      const currentSkillTag = skillTag.trim();
+      const currentPostType = postType;
 
-    if (currentUser.role === 'faculty' || currentUser.role === 'admin') {
-      badgeText = '🎓 Educator Update';
-      badgeTheme = 'purple';
-    } else if (currentPostType === 'project_milestone') {
-      badgeText = '🚀 Project Milestone';
-      badgeTheme = 'indigo';
-    } else if (currentPostType === 'skill_unlocked') {
-      badgeText = '✨ Skill Mastery';
-      badgeTheme = 'emerald';
-    } else if (currentPostType === 'achievement') {
-      badgeText = '🏅 Achievement';
-      badgeTheme = 'rose';
-    }
-
-    const baseActivityPayload = {
-      type: currentPostType,
-      author: {
-        id: currentUser.id,
-        name: currentUser.name,
-        headline: currentUser.headline || `${currentUser.department || 'Computer Science'} • ${currentUser.college || 'THENAM Campus'}`,
-        avatar: currentUser.avatar,
-        college: currentUser.college
-      },
-      title: (currentPostType === 'project_milestone' || currentPostType === 'certificate_earned')
-        ? (sanitizedContent.split('\n')[0]?.slice(0, 60) || 'Shared an update')
-        : '',
-      description: sanitizedContent,
-      badgeText,
-      badgeTheme,
-      metadata: {
-        imageUrls: persistentImageUrls.length > 0 ? persistentImageUrls : undefined,
-        externalUrl: currentExternalLink || undefined,
-        skillName: currentSkillTag || undefined
-      }
-    };
-
-    // 2. Publish to local feed instantaneously with persistent image data
-    createActivity(baseActivityPayload);
-
-    // 3. Background: try to upload to cloud storage and update server
-    if (currentImages.length > 0 && auth.currentUser) {
-      (async () => {
-        try {
-          const cloudUrls = await Promise.all(
-            currentImages.map((img, idx) => uploadWithFastFallback(img, idx))
-          );
-          // Server already has the data URLs from the API sync in createActivity,
-          // cloud URLs would be better but data URLs work as fallback
-          if (cloudUrls.some(u => u.startsWith('https://'))) {
-            console.log('Background sync: cloud storage URLs ready');
+      // Upload images to cloud first to prevent 1MB Firestore limit issues with base64
+      const cloudImageUrls: string[] = await Promise.all(
+        currentImages.map(async (img, idx) => {
+          if (img.uploadedUrl) return img.uploadedUrl;
+          if (auth.currentUser) {
+            try {
+              return await storageService.uploadPostImage(currentUser.id, img.file, Date.now() + idx);
+            } catch (err) {
+              console.warn('Cloud upload failed, falling back to base64', err);
+              return await fileToDataUrl(img.file);
+            }
           }
-        } catch (err) {
-          console.error('Background cloud upload error:', err);
+          return await fileToDataUrl(img.file);
+        })
+      );
+
+      let badgeText = '💭 Student Post';
+      let badgeTheme: 'blue' | 'indigo' | 'emerald' | 'amber' | 'purple' | 'rose' = 'blue';
+
+      if (currentUser.role === 'faculty' || currentUser.role === 'admin') {
+        badgeText = '🎓 Educator Update';
+        badgeTheme = 'purple';
+      } else if (currentPostType === 'project_milestone') {
+        badgeText = '🚀 Project Milestone';
+        badgeTheme = 'indigo';
+      } else if (currentPostType === 'skill_unlocked') {
+        badgeText = '✨ Skill Mastery';
+        badgeTheme = 'emerald';
+      } else if (currentPostType === 'achievement') {
+        badgeText = '🏅 Achievement';
+        badgeTheme = 'rose';
+      }
+
+      const baseActivityPayload = {
+        type: currentPostType,
+        author: {
+          id: currentUser.id,
+          name: currentUser.name,
+          headline: currentUser.headline || `${currentUser.department || 'Computer Science'} • ${currentUser.college || 'THENAM Campus'}`,
+          avatar: currentUser.avatar,
+          college: currentUser.college
+        },
+        title: (currentPostType === 'project_milestone' || currentPostType === 'certificate_earned')
+          ? (sanitizedContent.split('\n')[0]?.slice(0, 60) || 'Shared an update')
+          : '',
+        description: sanitizedContent,
+        badgeText,
+        badgeTheme,
+        metadata: {
+          imageUrls: cloudImageUrls.length > 0 ? cloudImageUrls : undefined,
+          externalUrl: currentExternalLink || undefined,
+          skillName: currentSkillTag || undefined
         }
-      })();
+      };
+
+      // Publish to feed
+      createActivity(baseActivityPayload);
+
+      // Reset form
+      setContent('');
+      setImages([]);
+      setExternalLink('');
+      setSkillTag('');
+      setShowLinkInput(false);
+      setShowTagInput(false);
+    } catch (err: any) {
+      console.error('Post creation error:', err);
+      setError('Failed to publish post. Please try again.');
+    } finally {
+      setPosting(false);
     }
   };
 
