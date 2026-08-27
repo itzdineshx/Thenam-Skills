@@ -142,14 +142,21 @@
   body * {
     visibility: hidden;
   }
-  #printable-certificate, #printable-certificate * {
+  #printable-certificate, #printable-certificate *,
+  #printable-cv, #printable-cv * {
     visibility: visible;
   }
-  #printable-certificate {
+  #printable-certificate, #printable-cv {
     position: absolute;
     left: 0;
     top: 0;
     width: 100%;
+  }
+  
+  /* Ensure backgrounds print properly */
+  #printable-cv {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
   }
 }
 

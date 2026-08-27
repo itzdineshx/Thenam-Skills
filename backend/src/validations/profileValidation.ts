@@ -32,7 +32,8 @@ export const profileCreateSchema = z.object({
   linkedinURL: z.string().regex(linkedinRegex, 'Invalid LinkedIn URL').nullable().optional().or(z.literal('')),
   githubURL: z.string().regex(githubRegex, 'Invalid GitHub URL').nullable().optional().or(z.literal('')),
   photoURL: z.string().optional().or(z.literal('')),
-  coverImage: z.string().optional().or(z.literal(''))
+  coverImage: z.string().optional().or(z.literal('')),
+  bio: z.string().optional().or(z.literal(''))
 });
 
 export const profileUpdateSchema = profileCreateSchema.partial();

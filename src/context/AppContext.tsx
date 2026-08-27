@@ -430,6 +430,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (updated.avatar) dbUpdates.photoURL = updated.avatar;
       if (updated.coverImage) dbUpdates.coverImage = updated.coverImage;
       if (updated.dateOfBirth) dbUpdates.dateOfBirth = updated.dateOfBirth;
+      if (updated.bio !== undefined) dbUpdates.bio = updated.bio;
       if (updated.linkedinUrl !== undefined) dbUpdates.linkedinURL = updated.linkedinUrl || null;
       if (updated.githubUrl !== undefined) dbUpdates.githubURL = updated.githubUrl || null;
       if (updated.location) {
