@@ -122,8 +122,6 @@ export const ProfilePage: React.FC = () => {
   // Modal control states
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [socialModalType, setSocialModalType] = useState<'linkedin' | 'github'>('linkedin');
-
-  const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
@@ -189,9 +187,28 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
-  const handleSaveSkills = async (newSkills: string[]) => {
-    await updateCurrentUser({ skills: newSkills });
-    setIsSkillModalOpen(false);
+  const [isSkillModalOpen, setIsSkillModalOpen] = useState(false);
+  const [tempSkills, setTempSkills] = useState<string[]>([]);
+  const [isSavingSkills, setIsSavingSkills] = useState(false);
+
+  // When opening modal, initialize tempSkills
+  useEffect(() => {
+    if (isSkillModalOpen) {
+      setTempSkills(currentUser.skills || []);
+    }
+  }, [isSkillModalOpen, currentUser.skills]);
+
+  const handleSaveSkills = async () => {
+    setIsSavingSkills(true);
+    try {
+      await updateCurrentUser({ skills: tempSkills });
+      showToast('Skills updated successfully!');
+      setIsSkillModalOpen(false);
+    } catch (err: any) {
+      showToast(err.message || 'Failed to update skills');
+    } finally {
+      setIsSavingSkills(false);
+    }
   };
 
   if (profile.id === 'not_found') {
@@ -722,23 +739,47 @@ export const ProfilePage: React.FC = () => {
         onSave={handleSaveSocialLink}
       />
 
-      {/* Skills Showcase Selector Modal */}
+      {/* Skills Selection Fullscreen Modal */}
       {isSkillModalOpen && (
         <div className="fixed inset-0 z-50 overflow-y-auto flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => setIsSkillModalOpen(false)} />
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" onClick={() => !isSavingSkills && setIsSkillModalOpen(false)} />
           <div className="bg-white rounded-3xl border border-slate-200 w-full max-w-2xl shadow-2xl relative z-10 overflow-hidden p-6 space-y-4 animate-in fade-in zoom-in-95">
             <div className="flex items-center justify-between border-b border-slate-100 pb-3">
               <h3 className="text-base font-black text-slate-900">Manage Portfolio Skills</h3>
-              <button onClick={() => setIsSkillModalOpen(false)} className="text-slate-400 hover:text-slate-600">
+              <button disabled={isSavingSkills} onClick={() => setIsSkillModalOpen(false)} className="text-slate-400 hover:text-slate-600 disabled:opacity-50">
                 <X className="w-4 h-4" />
               </button>
             </div>
             
             <SkillSelector
-              selectedSkills={currentUser.skills}
-              onChange={handleSaveSkills}
+              selectedSkills={tempSkills}
+              onChange={setTempSkills}
               maxSkills={15}
             />
+
+            <div className="pt-4 flex justify-end gap-3 border-t border-slate-100">
+              <button
+                onClick={() => setIsSkillModalOpen(false)}
+                disabled={isSavingSkills}
+                className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveSkills}
+                disabled={isSavingSkills || tempSkills.length === 0}
+                className="flex items-center gap-2 px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition-colors disabled:opacity-50"
+              >
+                {isSavingSkills ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <span>Saving...</span>
+                  </>
+                ) : (
+                  <span>Save Skills</span>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

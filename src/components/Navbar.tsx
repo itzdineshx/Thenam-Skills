@@ -158,18 +158,20 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-2 sm:gap-3">
             
 
-            {/* Bond Network */}
-            <button
-              id="navbar-bond-btn"
-              onClick={() => navigate('/bond')}
-              className={`relative p-2 rounded-lg transition-colors ${
-                currentPath === '/bond' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-              title="Campus Bond"
-            >
-              <Link className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
-            </button>
+            {/* Bond Network (Hidden for now) */}
+            {false && (
+              <button
+                id="navbar-bond-btn"
+                onClick={() => navigate('/bond')}
+                className={`relative p-2 rounded-lg transition-colors ${
+                  currentPath === '/bond' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
+                }`}
+                title="Campus Bond"
+              >
+                <Link className="w-5 h-5" />
+                <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+              </button>
+            )}
 
             {/* Notifications Menu */}
             <div className="relative" ref={notifRef}>

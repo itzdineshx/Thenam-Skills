@@ -273,6 +273,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
       socket.on('new_event_notification', onNewEventNotification);
 
+      const onNewActivityNotification = (activityData: any) => {
+        setNotifications(nPrev => [{
+          id: `notif_${Date.now()}_${Math.random()}`,
+          type: 'system',
+          title: `New Educator Update`,
+          message: `${activityData.author?.name || 'An Educator'} posted: ${activityData.title || activityData.description?.substring(0, 30) || 'a new update'}`,
+          timestamp: 'Just now',
+          isRead: false,
+          link: '/feed',
+          badgeIcon: 'radio'
+        }, ...nPrev]);
+      };
+      socket.on('new_activity_notification', onNewActivityNotification);
+
       // Listen to real-time events from Firestore
       const unsubscribeEvents = subscribeToEvents(
         (liveEvents) => {
