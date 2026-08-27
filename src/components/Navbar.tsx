@@ -323,20 +323,33 @@ export const Navbar: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
-                      <div className="bg-slate-50 p-1.5 rounded-lg">
-                        <span className="block text-xs font-extrabold text-slate-900">{currentUser.metrics.coursesCompleted}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">Courses</span>
+                    {currentUser.role === 'faculty' ? (
+                      <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-slate-900">{courses.length}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Conducting</span>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-indigo-650">{currentUser.metrics.networkCount || 1200}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Mentored</span>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-1.5 rounded-lg">
-                        <span className="block text-xs font-extrabold text-indigo-600">{currentUser.metrics.certificatesCount}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">Certs</span>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-slate-900">{currentUser.metrics.coursesCompleted}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Courses</span>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-indigo-600">{currentUser.metrics.certificatesCount}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Certs</span>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-emerald-600">{currentUser.metrics.xpPoints}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">XP</span>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-1.5 rounded-lg">
-                        <span className="block text-xs font-extrabold text-emerald-600">{currentUser.metrics.xpPoints}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">XP</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="px-2 py-1.5 space-y-0.5">
@@ -345,29 +358,31 @@ export const Navbar: React.FC = () => {
                         setIsProfileOpen(false);
                         navigate(`/profile/${currentUser.id}`);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left cursor-pointer"
                     >
                       <User className="w-4 h-4 text-slate-400" />
-                      <span>View Student Portfolio</span>
+                      <span>{currentUser.role === 'faculty' ? 'View Educator Portfolio' : 'View Student Portfolio'}</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        navigate('/certificates');
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left"
-                    >
-                      <Award className="w-4 h-4 text-amber-500" />
-                      <span>My Verified Certificates ({currentUser.metrics.certificatesCount})</span>
-                    </button>
+                    {currentUser.role !== 'faculty' && (
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          navigate('/certificates');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left cursor-pointer"
+                      >
+                        <Award className="w-4 h-4 text-amber-500" />
+                        <span>My Verified Certificates ({currentUser.metrics.certificatesCount})</span>
+                      </button>
+                    )}
 
                     <button
                       onClick={() => {
                         setIsProfileOpen(false);
                         navigate('/settings');
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left cursor-pointer"
                     >
                       <Sliders className="w-4 h-4 text-slate-400" />
                       <span>Automation & Settings</span>

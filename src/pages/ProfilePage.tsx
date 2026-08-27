@@ -23,7 +23,9 @@ import {
   Flame,
   Zap,
   ArrowRight,
-  X
+  X,
+  GraduationCap,
+  Users
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
@@ -39,7 +41,7 @@ import { CreatePostWidget } from '../components/CreatePostWidget';
 import { uploadProfileImage, uploadEducatorAvatar, storageService } from '../firebase/storage';
 
 export const ProfilePage: React.FC = () => {
-  const { currentUser, updateCurrentUser, addSkillToProfile, removeSkillFromProfile, certificates, projects, activities, showToast } = useApp();
+  const { currentUser, updateCurrentUser, addSkillToProfile, removeSkillFromProfile, certificates, projects, activities, events, showToast } = useApp();
   const { currentPath, navigate } = useRouter();
   const { refreshProfile } = useAuth();
 
@@ -109,15 +111,17 @@ export const ProfilePage: React.FC = () => {
   }, [isOwnProfile, profileId]);
 
   const profile = isOwnProfile ? currentUser : (publicProfile || currentUser);
+  const isFaculty = profile.role === 'faculty';
 
-  const [activeTab, setActiveTab] = useState<'journey' | 'certificates' | 'projects' | 'skills'>('journey');
+  const [activeTab, setActiveTab] = useState<string>('journey');
   const [isEditingBio, setIsEditingBio] = useState(false);
   const [editedBio, setEditedBio] = useState(profile.bio);
 
   // Sync edited bio if profile changes
   useEffect(() => {
     setEditedBio(profile.bio);
-  }, [profile.bio]);
+    setActiveTab('journey');
+  }, [profile.id, profile.bio]);
 
   // Modal control states
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
@@ -284,16 +288,20 @@ export const ProfilePage: React.FC = () => {
                   target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.name || 'User')}&background=random&color=fff&size=150`;
                 }}
               />
-              <div className="absolute bottom-1 right-1 p-1.5 bg-indigo-600 rounded-full text-white ring-2 ring-white" title="Verified THENAM Student">
-                <ShieldCheck className="w-4 h-4" />
+              <div className={`absolute bottom-1 right-1 p-1.5 rounded-full text-white ring-2 ring-white ${isFaculty ? 'bg-amber-500' : 'bg-indigo-600'}`} title={isFaculty ? "Verified THENAM Educator" : "Verified THENAM Student"}>
+                {isFaculty ? <Award className="w-4 h-4" /> : <ShieldCheck className="w-4 h-4" />}
               </div>
             </div>
 
             {/* Availability Badge */}
             <div className="flex items-center gap-2 self-start sm:self-auto">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full border border-emerald-200">
-                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Available for AI & Software Roles
+              <span className={`inline-flex items-center gap-1.5 px-3 py-1 text-xs font-bold rounded-full border ${
+                isFaculty 
+                  ? 'bg-amber-50 text-amber-800 border-amber-200' 
+                  : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${isFaculty ? 'bg-amber-500' : 'bg-emerald-500'} animate-pulse`} />
+                {isFaculty ? 'Academic Board • Available for Mentoring' : 'Available for AI & Software Roles'}
               </span>
             </div>
           </div>
@@ -436,41 +444,83 @@ export const ProfilePage: React.FC = () => {
 
             {/* Metrics Dashboard Column */}
             <div className="bg-slate-50 rounded-2xl p-5 border border-slate-200/80 space-y-4 flex flex-col justify-between">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Verified Credential Index</span>
-                  <span className="text-xs font-bold text-indigo-600 flex items-center gap-1">
-                    <Flame className="w-3.5 h-3.5 text-amber-500" />
-                    {profile.metrics.streakDays}d Streak
-                  </span>
-                </div>
+              {isFaculty ? (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Educator Portfolio Index</span>
+                      <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                        <GraduationCap className="w-3.5 h-3.5 text-amber-500 animate-pulse" />
+                        Seniority Level
+                      </span>
+                    </div>
 
-                <div className="grid grid-cols-2 gap-2 text-center">
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <span className="text-xl font-black text-amber-500">{profile.metrics.certificatesCount}</span>
-                    <span className="text-[10px] text-slate-500 block font-semibold">Certificates</span>
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                        <span className="text-xl font-black text-purple-600">
+                          {events.filter(e => e.creatorId === profile.id || e.speaker.name === profile.name).length}
+                        </span>
+                        <span className="text-[10px] text-slate-500 block font-semibold">Events Hosted</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                        <span className="text-xl font-black text-indigo-600">
+                          {profile.metrics.networkCount}
+                        </span>
+                        <span className="text-[10px] text-slate-500 block font-semibold">Mentored Students</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs col-span-2">
+                        <span className="text-sm font-black text-emerald-650 tracking-wider">THENAM CAMPUS</span>
+                        <span className="text-[10px] text-slate-500 block font-semibold mt-0.5">Faculty Board Member</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <span className="text-xl font-black text-indigo-600">{profile.metrics.projectsCount}</span>
-                    <span className="text-[10px] text-slate-500 block font-semibold">Projects</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <span className="text-xl font-black text-emerald-600">{profile.metrics.coursesCompleted}</span>
-                    <span className="text-[10px] text-slate-500 block font-semibold">Courses Done</span>
-                  </div>
-                  <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
-                    <span className="text-xl font-black text-purple-600">{profile.metrics.xpPoints}</span>
-                    <span className="text-[10px] text-slate-500 block font-semibold">Experience XP</span>
-                  </div>
-                </div>
-              </div>
 
-              <div className="pt-2 border-t border-slate-200">
-                <div className="flex items-center justify-between text-xs text-slate-600">
-                  <span>THENAM College Rank</span>
-                  <span className="font-black text-slate-900">#{profile.metrics.globalRank || 12}</span>
-                </div>
-              </div>
+                  <div className="pt-2 border-t border-slate-200">
+                    <div className="flex items-center justify-between text-xs text-slate-600">
+                      <span>Authority level</span>
+                      <span className="font-black text-slate-900">Academic Reviewer</span>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Verified Credential Index</span>
+                      <span className="text-xs font-bold text-indigo-600 flex items-center gap-1">
+                        <Flame className="w-3.5 h-3.5 text-amber-500" />
+                        {profile.metrics.streakDays}d Streak
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-center">
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                        <span className="text-xl font-black text-amber-500">{profile.metrics.certificatesCount}</span>
+                        <span className="text-[10px] text-slate-500 block font-semibold">Certificates</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                        <span className="text-xl font-black text-indigo-600">{profile.metrics.projectsCount}</span>
+                        <span className="text-[10px] text-slate-500 block font-semibold">Projects</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                        <span className="text-xl font-black text-emerald-600">{profile.metrics.coursesCompleted}</span>
+                        <span className="text-[10px] text-slate-500 block font-semibold">Courses Done</span>
+                      </div>
+                      <div className="bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
+                        <span className="text-xl font-black text-purple-600">{profile.metrics.xpPoints}</span>
+                        <span className="text-[10px] text-slate-500 block font-semibold">Experience XP</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-2 border-t border-slate-200">
+                    <div className="flex items-center justify-between text-xs text-slate-600">
+                      <span>THENAM College Rank</span>
+                      <span className="font-black text-slate-900">#{profile.metrics.globalRank || 12}</span>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -478,63 +528,104 @@ export const ProfilePage: React.FC = () => {
 
       {/* Tabs Navigation */}
       <div className="flex items-center gap-2 border-b border-slate-200 pb-1 overflow-x-auto no-scrollbar">
-        <button
-          onClick={() => setActiveTab('journey')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
-            activeTab === 'journey'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Sparkles className="w-4 h-4" />
-          <span>My Activity & Posts</span>
-        </button>
+        {isFaculty ? (
+          <>
+            <button
+              onClick={() => setActiveTab('journey')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'journey'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Broadcasts & Posts</span>
+            </button>
 
-        <button
-          onClick={() => setActiveTab('certificates')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
-            activeTab === 'certificates'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Award className="w-4 h-4" />
-          <span>Verified Certificates ({isOwnProfile ? certificates.length : profile.metrics.certificatesCount})</span>
-        </button>
+            <button
+              onClick={() => setActiveTab('events')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'events'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Calendar className="w-4 h-4" />
+              <span>Hosted Bootcamps ({events.filter(e => e.creatorId === profile.id || e.speaker.name === profile.name).length})</span>
+            </button>
 
-        <button
-          onClick={() => setActiveTab('projects')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
-            activeTab === 'projects'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <FolderGit2 className="w-4 h-4" />
-          <span>Projects ({isOwnProfile ? projects.length : profile.metrics.projectsCount})</span>
-        </button>
+            <button
+              onClick={() => setActiveTab('skills')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'skills'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>Expertise & Focus ({profile.skills?.length || 0})</span>
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={() => setActiveTab('journey')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'journey'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>My Activity & Posts</span>
+            </button>
 
-        <button
-          onClick={() => setActiveTab('skills')}
-          className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
-            activeTab === 'skills'
-              ? 'bg-indigo-600 text-white shadow-xs'
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
-          }`}
-        >
-          <Zap className="w-4 h-4" />
-          <span>Skills & Endorsements ({profile.skills.length})</span>
-        </button>
+            <button
+              onClick={() => setActiveTab('certificates')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'certificates'
+                  ? 'bg-indigo-650 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Award className="w-4 h-4" />
+              <span>Verified Certificates ({isOwnProfile ? certificates.length : profile.metrics.certificatesCount})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('projects')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'projects'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <FolderGit2 className="w-4 h-4" />
+              <span>Projects ({isOwnProfile ? projects.length : profile.metrics.projectsCount})</span>
+            </button>
+
+            <button
+              onClick={() => setActiveTab('skills')}
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all shrink-0 flex items-center gap-2 cursor-pointer ${
+                activeTab === 'skills'
+                  ? 'bg-indigo-600 text-white shadow-xs'
+                  : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+              }`}
+            >
+              <Zap className="w-4 h-4" />
+              <span>Skills & Endorsements ({profile.skills.length})</span>
+            </button>
+          </>
+        )}
       </div>
-
       {/* TAB CONTENT: My Activity & Posts */}
       {activeTab === 'journey' && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Activity & Published Posts</h3>
+              <h3 className="text-base font-bold text-slate-900">{isFaculty ? "Educator Broadcasts" : "Activity & Published Posts"}</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Your shared learning milestones, projects, and custom posts.
+                {isFaculty ? "Professional announcements, webinars, and masterclass notifications." : "Your shared learning milestones, projects, and custom posts."}
               </p>
             </div>
           </div>
@@ -558,15 +649,67 @@ export const ProfilePage: React.FC = () => {
                 (profile.id === 'mock_educator_jayamurugan' && act.author?.name?.toLowerCase().includes('jayamurugan'))
               ).length === 0 && (
               <div className="bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
-                No activity posts published yet. Use the post widget above to publish your first update!
+                No activity broadcasts published yet. Use the post widget above to publish your first update!
               </div>
             )}
           </div>
         </div>
       )}
 
-      {/* TAB CONTENT: Verified Certificates */}
-      {activeTab === 'certificates' && (
+      {/* TAB CONTENT: Hosted Bootcamps (Faculty only) */}
+      {isFaculty && activeTab === 'events' && (
+        <div className="space-y-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Hosted Bootcamps & Workshops</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Live sessions, webinars, and interactive coding events organized by this educator.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            {events
+              .filter(e => e.creatorId === profile.id || e.speaker.name === profile.name)
+              .map(ev => (
+                <div 
+                  key={ev.id} 
+                  className="bg-white rounded-3xl border border-slate-200 overflow-hidden shadow-[0_4px_20px_-4px_rgba(0,0,0,0.02)] hover:shadow-[0_8px_30px_-6px_rgba(0,0,0,0.05)] hover:-translate-y-0.5 transition-all flex flex-col justify-between group"
+                >
+                  <div className="relative aspect-video w-full bg-slate-950 overflow-hidden cursor-pointer" onClick={() => navigate(`/events/${ev.id}`)}>
+                    <img src={ev.coverImage || '/placeholder-event-16-9.jpg'} alt={ev.title} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 opacity-90" />
+                    <span className="absolute bottom-3 left-3 px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest bg-purple-600 text-white shadow-lg border border-purple-400/20">
+                      {ev.type}
+                    </span>
+                  </div>
+
+                  <div className="p-5 space-y-3">
+                    <h4 className="text-sm font-black text-slate-900 line-clamp-2 hover:text-indigo-650 cursor-pointer" onClick={() => navigate(`/events/${ev.id}`)}>{ev.title}</h4>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-500 font-bold">
+                      <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5 text-slate-400" />{ev.date}</span>
+                      <span className="flex items-center gap-1"><Users className="w-3.5 h-3.5 text-slate-400" />{ev.registeredCount} Enrolled</span>
+                    </div>
+                  </div>
+
+                  <div className="p-5 pt-0 flex gap-2">
+                    <button 
+                      onClick={() => navigate(`/events/${ev.id}`)}
+                      className="flex-1 py-2 px-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-750 rounded-xl text-xs font-black transition-colors text-center border border-indigo-200/40 cursor-pointer"
+                    >
+                      Manage Event Details
+                    </button>
+                  </div>
+                </div>
+              ))}
+            {events.filter(e => e.creatorId === profile.id || e.speaker.name === profile.name).length === 0 && (
+              <div className="col-span-2 bg-white rounded-3xl border border-slate-200 p-8 text-center text-slate-500 text-sm">
+                No events hosted yet.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* TAB CONTENT: Verified Certificates (Students only) */}
+      {!isFaculty && activeTab === 'certificates' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(isOwnProfile ? certificates : (profile.certificates || [])).map((cert) => (
             <div
@@ -604,7 +747,7 @@ export const ProfilePage: React.FC = () => {
               <div className="mt-5 pt-3 border-t border-slate-100 flex items-center gap-2">
                 <button
                   onClick={() => navigate(`/certificate/${cert.id}`)}
-                  className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-750 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
+                  className="flex-1 py-2 px-3 bg-indigo-600 hover:bg-indigo-755 text-white rounded-xl text-xs font-bold transition-colors flex items-center justify-center gap-1.5 shadow-2xs cursor-pointer"
                 >
                   <span>View High-Res Certificate</span>
                   <ExternalLink className="w-3.5 h-3.5" />
@@ -615,8 +758,8 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB CONTENT: Projects */}
-      {activeTab === 'projects' && (
+      {/* TAB CONTENT: Projects (Students only) */}
+      {!isFaculty && activeTab === 'projects' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {(isOwnProfile ? projects : (profile.projects || [])).map((proj) => (
             <div
@@ -672,23 +815,24 @@ export const ProfilePage: React.FC = () => {
         </div>
       )}
 
-      {/* TAB CONTENT: Skills & Endorsements */}
+      {/* TAB CONTENT: Skills / Expertise */}
       {activeTab === 'skills' && (
         <div className="bg-white rounded-3xl border border-slate-200 p-6 sm:p-8 space-y-6">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="text-base font-bold text-slate-900">Verified Technical Competencies</h3>
+              <h3 className="text-base font-bold text-slate-900">{isFaculty ? "Expertise & Areas of Focus" : "Verified Technical Competencies"}</h3>
               <p className="text-xs text-slate-500 mt-0.5">
-                Skills tagged with a verified badge were programmatically added and validated through completed THENAM coursework.
+                {isFaculty 
+                  ? "Core disciplines and academic domains of competency for student guidance." 
+                  : "Skills tagged with a verified badge were programmatically added and validated through completed THENAM coursework."}
               </p>
             </div>
 
-            {/* Quick Skill Add (opens SkillSelector Modal) */}
             {isOwnProfile && (
               <button
                 type="button"
                 onClick={() => setIsSkillModalOpen(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-750 text-white text-xs font-bold rounded-xl shadow-2xs transition-colors cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3 py-2 bg-indigo-600 hover:bg-indigo-755 text-white text-xs font-bold rounded-xl shadow-2xs transition-colors cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
                 <span>Add / Manage Skills</span>
@@ -703,14 +847,23 @@ export const ProfilePage: React.FC = () => {
                 className="p-3.5 bg-slate-50 rounded-2xl border border-slate-200/80 flex items-center justify-between group"
               >
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-black text-xs">
+                  <div className="w-8 h-8 rounded-xl bg-indigo-155/15 text-indigo-700 flex items-center justify-center font-black text-xs">
                     {skill.slice(0, 2).toUpperCase()}
                   </div>
                   <div>
                     <h5 className="text-xs font-bold text-slate-900">{skill}</h5>
-                    <span className="text-[10px] text-emerald-600 font-semibold flex items-center gap-1">
-                      <CheckCircle2 className="w-3 h-3" />
-                      Course-Verified
+                    <span className={`text-[10px] font-semibold flex items-center gap-1 ${isFaculty ? 'text-amber-600 font-extrabold' : 'text-emerald-605 font-bold'}`}>
+                      {isFaculty ? (
+                        <>
+                          <Award className="w-3 h-3 text-amber-500" />
+                          Faculty Expert
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle2 className="w-3 h-3 text-emerald-500" />
+                          Course-Verified
+                        </>
+                      )}
                     </span>
                   </div>
                 </div>
