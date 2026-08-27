@@ -371,11 +371,16 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             };
           });
           
-          setActivities(backendActs);
+          setActivities(prev => {
+            const newActs = [...backendActs];
+            const mockActs = INITIAL_ACTIVITIES.filter(mAct => !newActs.find(a => a.id === mAct.id));
+            return [...newActs, ...mockActs];
+          });
           setIsFeedLoading(false);
         })
         .catch(err => {
           console.error('Failed to load activities from API:', err);
+          setActivities(INITIAL_ACTIVITIES); // Fallback to mock data if API fails
           setIsFeedLoading(false);
         });
 

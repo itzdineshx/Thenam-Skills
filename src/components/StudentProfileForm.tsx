@@ -143,8 +143,8 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!name.trim()) newErrors.name = 'Full name is required';
-    if (!collegeName.trim()) newErrors.collegeName = 'College name is required';
+    if (!name.trim() || name.trim().length < 2) newErrors.name = 'Name must be at least 2 characters';
+    if (!collegeName.trim() || collegeName.trim().length < 2) newErrors.collegeName = 'College name must be at least 2 characters';
     
     // Validate DoB
     if (!dateOfBirth) {
@@ -183,9 +183,9 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
     }
 
     // Location validation
-    if (!city.trim()) newErrors.city = 'City is required';
-    if (!state.trim()) newErrors.state = 'State is required';
-    if (!country.trim()) newErrors.country = 'Country is required';
+    if (!city.trim() || city.trim().length < 2) newErrors.city = 'City must be at least 2 characters';
+    if (!state.trim() || state.trim().length < 2) newErrors.state = 'State must be at least 2 characters';
+    if (!country.trim() || country.trim().length < 2) newErrors.country = 'Country must be at least 2 characters';
 
     // Skills validation
     if (skills.length === 0) {
@@ -194,15 +194,15 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
 
     // Social URLs validation
     if (linkedinURL.trim()) {
-      const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[A-Za-z0-9_-]+\/?$/;
-      if (!linkedinRegex.test(linkedinURL.trim()) && !linkedinURL.trim().includes('linkedin.com/in/')) {
+      const linkedinRegex = /^(https?:\/\/)?(www\.)?linkedin\.com\/in\/[a-zA-Z0-9_.-]+\/?$/i;
+      if (!linkedinRegex.test(linkedinURL.trim())) {
         newErrors.linkedinURL = 'Invalid LinkedIn URL format (e.g., https://linkedin.com/in/username)';
       }
     }
 
     if (githubURL.trim()) {
-      const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[A-Za-z0-9_-]+\/?$/;
-      if (!githubRegex.test(githubURL.trim()) && !githubURL.trim().includes('github.com/')) {
+      const githubRegex = /^(https?:\/\/)?(www\.)?github\.com\/[a-zA-Z0-9_.-]+\/?$/i;
+      if (!githubRegex.test(githubURL.trim())) {
         newErrors.githubURL = 'Invalid GitHub URL format (e.g., https://github.com/username)';
       }
     }
