@@ -22,7 +22,9 @@ import {
   X,
   ExternalLink,
   Layers,
-  Link
+  Link,
+  Sun,
+  Moon
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { useRouter } from '../context/RouterContext';
@@ -37,11 +39,43 @@ export const Navbar: React.FC = () => {
     markNotificationAsRead,
     markAllNotificationsAsRead,
     triggerCourseCompletionAutomation,
-    courses
+    courses,
+    events,
+    showToast
   } = useApp();
   
   const { currentPath, navigate } = useRouter();
   const { logout } = useAuth();
+
+  // Dark mode theme state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    return localStorage.getItem('thenam_theme') === 'dark' || document.documentElement.classList.contains('dark');
+  });
+
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('thenam_theme', 'dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('thenam_theme', 'light');
+    }
+  }, [isDarkMode]);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+    showToast(!isDarkMode ? 'Dark theme activated!' : 'Light theme activated!');
+  };
+
+  // Find the next 2 active/upcoming events to display in notifications
+  const now = new Date().getTime();
+  const activeEvents = events.filter(ev => {
+    const scheduledAt = ev.scheduledAt || (ev.date && ev.time ? `${ev.date}T${ev.time}:00` : '');
+    if (!scheduledAt) return false;
+    const target = new Date(scheduledAt).getTime();
+    // Assuming an event is "active" until 4 hours after its scheduled start time
+    return (target + 4 * 60 * 60 * 1000) > now;
+  }).slice(0, 2);
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
@@ -87,7 +121,10 @@ export const Navbar: React.FC = () => {
 
 
   return (
-    <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-lg border-b border-slate-200/60 shadow-[0_2px_20px_-3px_rgba(99,102,241,0.03)] transition-all">
+      {/* Decorative gradient border bottom */}
+      <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600 opacity-70" />
+      
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 gap-4">
           
@@ -96,18 +133,18 @@ export const Navbar: React.FC = () => {
             <button
               id="navbar-brand-logo"
               onClick={() => navigate('/home')}
-              className="flex items-center gap-2.5 text-left group focus:outline-hidden"
+              className="flex items-center gap-2.5 text-left group focus:outline-hidden hover:opacity-95 transition-opacity"
             >
               <img 
                 src="/logo.jpg" 
                 alt="Thenam Campus Logo" 
-                className="w-10 h-10 rounded-xl object-cover shadow-md shadow-indigo-500/20 group-hover:scale-105 transition-transform"
+                className="w-10 h-10 rounded-xl object-cover shadow-lg shadow-indigo-500/15 border border-slate-200/50 group-hover:scale-105 transition-transform"
               />
               <div className="flex flex-col">
-                <span className="text-lg font-extrabold tracking-tight text-slate-900 leading-tight">
-                  Thenam <span className="text-indigo-600 font-black">Campus</span>
+                <span className="text-lg font-black tracking-tight text-slate-900 leading-tight">
+                  Thenam <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-600">Campus</span>
                 </span>
-                <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-widest">
+                <span className="text-[9px] font-black text-indigo-600/80 uppercase tracking-widest leading-none mt-0.5">
                   Verified Ecosystem
                 </span>
               </div>
@@ -127,12 +164,12 @@ export const Navbar: React.FC = () => {
               placeholder="Search courses, skills, peers, projects..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9.5 pr-4 py-1.5 bg-slate-100/80 hover:bg-slate-100 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-lg border border-slate-200 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100 outline-hidden transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-slate-50 hover:bg-slate-100/60 focus:bg-white text-xs text-slate-800 placeholder-slate-400 rounded-xl border border-slate-200/80 focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 outline-hidden transition-all duration-300"
             />
           </form>
 
           {/* Desktop Nav Items */}
-          <nav className="hidden lg:flex items-center gap-1">
+          <nav className="hidden lg:flex items-center gap-1.5">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = currentPath === item.path || (item.path !== '/home' && currentPath.startsWith(item.path));
@@ -141,10 +178,10 @@ export const Navbar: React.FC = () => {
                   key={item.path}
                   id={`nav-link-${item.label.toLowerCase().replace(/\s+/g, '-')}`}
                   onClick={() => navigate(item.path)}
-                  className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] ${
                     isActive
-                      ? 'bg-indigo-50 text-indigo-700 font-bold'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                      ? 'bg-gradient-to-r from-indigo-70 to-indigo-100/30 text-indigo-700 border border-indigo-200/50 shadow-xs'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-transparent'
                   }`}
                 >
                   <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600' : 'text-slate-500'}`} />
@@ -157,18 +194,13 @@ export const Navbar: React.FC = () => {
           {/* Right Action Icons & Profile */}
           <div className="flex items-center gap-2 sm:gap-3">
             
-
-            {/* Bond Network */}
+            {/* Theme Toggle Button */}
             <button
-              id="navbar-bond-btn"
-              onClick={() => navigate('/bond')}
-              className={`relative p-2 rounded-lg transition-colors ${
-                currentPath === '/bond' ? 'bg-indigo-50 text-indigo-700' : 'text-slate-600 hover:bg-slate-100'
-              }`}
-              title="Campus Bond"
+              onClick={toggleDarkMode}
+              className="p-2 rounded-lg text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              title={isDarkMode ? 'Switch to Light Theme' : 'Switch to Dark Theme'}
             >
-              <Link className="w-5 h-5" />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full ring-2 ring-white"></span>
+              {isDarkMode ? <Sun className="w-5 h-5 text-amber-400" /> : <Moon className="w-5 h-5" />}
             </button>
 
             {/* Notifications Menu */}
@@ -182,22 +214,22 @@ export const Navbar: React.FC = () => {
                 title="Notifications"
               >
                 <Bell className="w-5 h-5" />
-                {unreadNotificationsCount > 0 && (
+                {(unreadNotificationsCount > 0 || activeEvents.length > 0) && (
                   <span className="absolute top-1.5 right-1.5 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white">
-                    {unreadNotificationsCount}
+                    {unreadNotificationsCount + activeEvents.length}
                   </span>
                 )}
               </button>
 
               {/* Notifications Popover */}
               {isNotifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+                <div className="fixed top-[4.5rem] left-4 right-4 sm:absolute sm:top-auto sm:left-auto sm:right-0 sm:mt-2 w-auto sm:w-96 max-w-none bg-white rounded-2xl shadow-2xl border border-slate-200 py-2 z-50 animate-in fade-in slide-in-from-top-2 duration-150 sm:origin-top-right">
                   <div className="flex items-center justify-between px-4 py-2.5 border-b border-slate-100">
                     <div className="flex items-center gap-2">
                       <h4 className="text-sm font-bold text-slate-900">Notifications</h4>
-                      {unreadNotificationsCount > 0 && (
+                      {(unreadNotificationsCount > 0 || activeEvents.length > 0) && (
                         <span className="text-[11px] font-semibold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">
-                          {unreadNotificationsCount} new
+                          {unreadNotificationsCount + activeEvents.length} new
                         </span>
                       )}
                     </div>
@@ -212,7 +244,35 @@ export const Navbar: React.FC = () => {
                   </div>
 
                   <div className="max-h-80 overflow-y-auto divide-y divide-slate-100">
-                    {notifications.length === 0 ? (
+                    {activeEvents.map((ev) => (
+                      <div
+                        key={`event-${ev.id}`}
+                        onClick={() => {
+                          setIsNotifOpen(false);
+                          navigate(`/events/${ev.id}`);
+                        }}
+                        className="p-3.5 bg-purple-50/50 hover:bg-purple-100/50 cursor-pointer transition-colors flex gap-3 items-start border-b border-purple-100/50"
+                      >
+                        <div className="w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-0.5 bg-purple-100 text-purple-700">
+                          <Calendar className="w-4 h-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5 mb-0.5">
+                            <span className="text-[9px] font-black uppercase tracking-wider text-purple-600 bg-purple-100/50 px-1.5 py-0.5 rounded">Upcoming Event</span>
+                            {(() => {
+                              const target = new Date(ev.scheduledAt || (ev.date && ev.time ? `${ev.date}T${ev.time}:00` : '')).getTime();
+                              const isLive = target <= now && target + 4 * 60 * 60 * 1000 > now;
+                              return isLive && <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />;
+                            })()}
+                          </div>
+                          <p className="text-xs font-bold text-slate-900 leading-tight line-clamp-1">{ev.title}</p>
+                          <p className="text-[11px] text-slate-600 line-clamp-1 mt-0.5">Live session with {ev.speaker.name}</p>
+                          <span className="text-[10px] font-bold text-purple-600 block mt-1">{ev.date} {ev.time ? `• ${ev.time}` : ''}</span>
+                        </div>
+                      </div>
+                    ))}
+
+                    {notifications.length === 0 && activeEvents.length === 0 ? (
                       <div className="p-6 text-center text-slate-500 text-xs">No notifications yet</div>
                     ) : (
                       notifications.slice(0, 5).map((notif) => (
@@ -271,7 +331,7 @@ export const Navbar: React.FC = () => {
               <button
                 id="navbar-profile-dropdown-btn"
                 onClick={() => setIsProfileOpen(!isProfileOpen)}
-                className="flex items-center gap-2 p-1 rounded-full hover:ring-2 hover:ring-indigo-200 transition-all focus:outline-hidden"
+                className="flex items-center gap-2 p-1 rounded-full hover:ring-4 hover:ring-indigo-500/15 active:scale-95 transition-all focus:outline-hidden"
               >
                 <img
                   src={currentUser.avatar}
@@ -318,20 +378,33 @@ export const Navbar: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
-                      <div className="bg-slate-50 p-1.5 rounded-lg">
-                        <span className="block text-xs font-extrabold text-slate-900">{currentUser.metrics.coursesCompleted}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">Courses</span>
+                    {currentUser.role === 'faculty' ? (
+                      <div className="grid grid-cols-2 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-slate-900">{courses.length}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Conducting</span>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-indigo-650">{currentUser.metrics.networkCount || 1200}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Mentored</span>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-1.5 rounded-lg">
-                        <span className="block text-xs font-extrabold text-indigo-600">{currentUser.metrics.certificatesCount}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">Certs</span>
+                    ) : (
+                      <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-slate-100 text-center">
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-slate-900">{currentUser.metrics.coursesCompleted}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Courses</span>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-indigo-600">{currentUser.metrics.certificatesCount}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">Certs</span>
+                        </div>
+                        <div className="bg-slate-50 p-1.5 rounded-lg">
+                          <span className="block text-xs font-extrabold text-emerald-600">{currentUser.metrics.xpPoints}</span>
+                          <span className="text-[10px] text-slate-500 font-medium">XP</span>
+                        </div>
                       </div>
-                      <div className="bg-slate-50 p-1.5 rounded-lg">
-                        <span className="block text-xs font-extrabold text-emerald-600">{currentUser.metrics.xpPoints}</span>
-                        <span className="text-[10px] text-slate-500 font-medium">XP</span>
-                      </div>
-                    </div>
+                    )}
                   </div>
 
                   <div className="px-2 py-1.5 space-y-0.5">
@@ -340,33 +413,35 @@ export const Navbar: React.FC = () => {
                         setIsProfileOpen(false);
                         navigate(`/profile/${currentUser.id}`);
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left cursor-pointer"
                     >
                       <User className="w-4 h-4 text-slate-400" />
-                      <span>View Student Portfolio</span>
+                      <span>{currentUser.role === 'faculty' ? 'View Educator Portfolio' : 'View Student Portfolio'}</span>
                     </button>
 
-                    <button
-                      onClick={() => {
-                        setIsProfileOpen(false);
-                        navigate('/certificates');
-                      }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left"
-                    >
-                      <Award className="w-4 h-4 text-amber-500" />
-                      <span>My Verified Certificates ({currentUser.metrics.certificatesCount})</span>
-                    </button>
+                    {currentUser.role !== 'faculty' && (
+                      <button
+                        onClick={() => {
+                          setIsProfileOpen(false);
+                          navigate('/certificates');
+                        }}
+                        className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left cursor-pointer"
+                      >
+                        <Award className="w-4 h-4 text-amber-500" />
+                        <span>My Verified Certificates ({currentUser.metrics.certificatesCount})</span>
+                      </button>
+                    )}
 
-                    <button
+                    {/* <button
                       onClick={() => {
                         setIsProfileOpen(false);
                         navigate('/settings');
                       }}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left"
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-indigo-50 hover:text-indigo-700 rounded-lg transition-colors text-left cursor-pointer"
                     >
                       <Sliders className="w-4 h-4 text-slate-400" />
                       <span>Automation & Settings</span>
-                    </button>
+                    </button> */}
                   </div>
 
                   <div className="pt-2 mt-2 border-t border-slate-100 px-2 space-y-0.5">

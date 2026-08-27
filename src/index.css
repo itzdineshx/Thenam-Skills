@@ -1,5 +1,109 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Global Dark Mode Overrides */
+.dark body {
+  background-color: #0b0f19 !important;
+  color: #f8fafc !important;
+}
+
+.dark main {
+  background-color: #0b0f19 !important;
+}
+
+.dark nav,
+.dark header,
+.dark footer {
+  background-color: #151c2c !important;
+  border-color: #26334d !important;
+}
+
+.dark .bg-white {
+  background-color: #151c2c !important;
+  color: #f8fafc !important;
+  border-color: #26334d !important;
+}
+
+.dark .bg-slate-50,
+.dark .bg-slate-100\/70,
+.dark .bg-slate-100,
+.dark .bg-slate-100\/80 {
+  background-color: #0b0f19 !important;
+  color: #f8fafc !important;
+}
+
+.dark .bg-slate-200,
+.dark .bg-slate-300,
+.dark .bg-slate-200\/60,
+.dark .bg-slate-200\/80 {
+  background-color: #1e293b !important;
+  color: #f8fafc !important;
+  border-color: #334155 !important;
+}
+
+.dark .bg-slate-50\/50,
+.dark .bg-purple-50\/50,
+.dark .bg-indigo-50\/50 {
+  background-color: #1e293b !important;
+}
+
+.dark .text-slate-900,
+.dark .text-slate-800,
+.dark .text-slate-700 {
+  color: #f8fafc !important;
+}
+
+.dark .text-slate-600,
+.dark .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
+.dark .text-slate-400 {
+  color: #64748b !important;
+}
+
+.dark .text-indigo-600,
+.dark .text-indigo-700 {
+  color: #a5b4fc !important;
+}
+
+.dark .text-purple-600,
+.dark .text-purple-700 {
+  color: #c084fc !important;
+}
+
+.dark .border-slate-200,
+.dark .border-slate-100,
+.dark .border-slate-200\/90,
+.dark .border-slate-200\/80,
+.dark .border-slate-200\/60 {
+  border-color: #26334d !important;
+}
+
+/* Dark Mode Inputs & Textareas */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #0b0f19 !important;
+  color: #f8fafc !important;
+  border-color: #26334d !important;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder {
+  color: #64748b !important;
+}
+
+/* Dark Mode Pills & Badges */
+.dark .bg-indigo-50,
+.dark .bg-purple-50,
+.dark .bg-emerald-50,
+.dark .bg-amber-50 {
+  background-color: #1e293b !important;
+  color: #e2e8f0 !important;
+}
+
 @layer base {
   body {
     font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;

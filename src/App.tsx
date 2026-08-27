@@ -20,6 +20,7 @@ import { CertificateDetailPage } from './pages/CertificateDetailPage';
 import { ProjectsPage } from './pages/ProjectsPage';
 import { EventsPage } from './pages/EventsPage';
 import { EventPlayerPage } from './pages/EventPlayerPage';
+import { EventDetailPage } from './pages/EventDetailPage';
 import { CommunitiesPage } from './pages/CommunitiesPage';
 import { TalentPage } from './pages/TalentPage';
 import { AchievementsPage } from './pages/AchievementsPage';
@@ -32,6 +33,7 @@ import { AdminPage } from './pages/AdminPage';
 import { OpeningSoonPage } from './pages/OpeningSoonPage';
 
 import { ShieldCheck } from 'lucide-react';
+import { EducatorFAB } from './components/EducatorFAB';
 
 const AppContent: React.FC = () => {
   const { currentPath, navigate } = useRouter();
@@ -96,16 +98,20 @@ const AppContent: React.FC = () => {
       return <CertificatesPage />;
     }
     if (path.startsWith('/projects') || path.startsWith('/project/')) {
-      return <OpeningSoonPage />;
+      return <ProjectsPage />;
     }
     if (path.startsWith('/events')) {
       if (path.includes('/learn')) {
         return <EventPlayerPage />;
       }
+      const parts = currentPath.split('/');
+      if (parts[2] && parts[2].trim() !== '') {
+        return <EventDetailPage />;
+      }
       return <EventsPage />;
     }
     if (path.startsWith('/communities')) {
-      return <OpeningSoonPage />;
+      return <CommunitiesPage />;
     }
     if (path.startsWith('/talent') || path.startsWith('/search')) {
       return <OpeningSoonPage />;
@@ -164,6 +170,7 @@ const AppContent: React.FC = () => {
       {/* Global Modals & Notifications */}
       <AutomationCelebrationModal />
       <Toast />
+      <EducatorFAB />
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 mt-auto py-8 text-xs text-slate-500">

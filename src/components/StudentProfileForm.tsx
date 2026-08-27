@@ -35,7 +35,7 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
   loading,
   role
 }) => {
-  const canUploadImage = role === 'faculty' || role === 'admin';
+  const canUploadImage = true;
   
   // Form fields states
   const [name, setName] = useState(initialData.name || '');
@@ -290,7 +290,7 @@ export const StudentProfileForm: React.FC<StudentProfileFormProps> = ({
         <div className="flex-1 space-y-1 text-center sm:text-left">
           <h4 className="text-sm font-bold text-slate-800">Profile Representation Photo</h4>
           <p className="text-xs text-slate-500 leading-relaxed">
-            {canUploadImage ? 'Google photo is selected by default. You can upload a customized image (JPG, PNG, WebP) up to 5 MB.' : 'Your profile photo is synced from your Google account. Only verified faculty and admins can upload custom avatars.'}
+            Google photo is selected by default. You can upload a customized image (JPG, PNG, WebP) up to 5 MB.
           </p>
           {errors.avatar && (
             <span className="text-[11px] text-rose-600 font-bold block">{errors.avatar}</span>

@@ -27,7 +27,7 @@ import { INITIAL_COMMUNITIES } from '../mock/communities';
 import { useAuth } from './AuthContext';
 import { api } from '../services/api';
 import { socket } from '../services/socket';
-import { createEventInFirestore, subscribeToEvents, toggleEventRegistration as toggleEventRegistrationInFirestore, deleteEvent as deleteEventInFirestore } from '../firebase/firestore';
+import { createEventInFirestore, updateEventInFirestore, subscribeToEvents, toggleEventRegistration as toggleEventRegistrationInFirestore, deleteEvent as deleteEventInFirestore } from '../firebase/firestore';
 
 interface AutomationPayload {
   title: string;
@@ -107,6 +107,7 @@ interface AppContextType {
 
   // New Features
   createEvent: (eventData: Omit<EventItem, 'id' | 'registeredCount' | 'isRegistered'>) => Promise<void>;
+  updateEvent: (eventId: string, eventData: Partial<EventItem>) => Promise<void>;
   deleteEvent: (eventId: string) => Promise<void>;
   toggleFollowEducator: (educatorId: string) => void;
 }
@@ -273,6 +274,20 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       };
       socket.on('new_event_notification', onNewEventNotification);
 
+      const onNewActivityNotification = (activityData: any) => {
+        setNotifications(nPrev => [{
+          id: `notif_${Date.now()}_${Math.random()}`,
+          type: 'system',
+          title: `New Educator Update`,
+          message: `${activityData.author?.name || 'An Educator'} posted: ${activityData.title || activityData.description?.substring(0, 30) || 'a new update'}`,
+          timestamp: 'Just now',
+          isRead: false,
+          link: '/feed',
+          badgeIcon: 'radio'
+        }, ...nPrev]);
+      };
+      socket.on('new_activity_notification', onNewActivityNotification);
+
       // Listen to real-time events from Firestore
       const unsubscribeEvents = subscribeToEvents(
         (liveEvents) => {
@@ -371,16 +386,12 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
             };
           });
           
-          setActivities(prev => {
-            const newActs = [...backendActs];
-            const mockActs = INITIAL_ACTIVITIES.filter(mAct => !newActs.find(a => a.id === mAct.id));
-            return [...newActs, ...mockActs];
-          });
+          setActivities(backendActs);
           setIsFeedLoading(false);
         })
         .catch(err => {
           console.error('Failed to load activities from API:', err);
-          setActivities(INITIAL_ACTIVITIES); // Fallback to mock data if API fails
+          setActivities([]); // Do not fallback to mock data
           setIsFeedLoading(false);
         });
 
@@ -417,6 +428,8 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
       if (updated.college) dbUpdates.collegeName = updated.college;
       if (updated.phone) dbUpdates.phoneNumber = updated.phone;
       if (updated.avatar) dbUpdates.photoURL = updated.avatar;
+      if (updated.coverImage) dbUpdates.coverImage = updated.coverImage;
+      if (updated.dateOfBirth) dbUpdates.dateOfBirth = updated.dateOfBirth;
       if (updated.linkedinUrl !== undefined) dbUpdates.linkedinURL = updated.linkedinUrl || null;
       if (updated.githubUrl !== undefined) dbUpdates.githubURL = updated.githubUrl || null;
       if (updated.location) {
@@ -908,6 +921,17 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
     showToast('Event created successfully and broadcasted globally!');
   };
 
+  const updateEvent = async (eventId: string, eventData: Partial<EventItem>) => {
+    try {
+      await updateEventInFirestore(eventId, eventData);
+      showToast('Event updated successfully!');
+    } catch (err) {
+      console.error('Failed to update event in Firestore:', err);
+      showToast('Error updating event.');
+      throw err;
+    }
+  };
+
   const deleteEvent = async (eventId: string) => {
     const event = events.find(ev => ev.id === eventId);
     if (!event) return;
@@ -1089,6 +1113,7 @@ export const AppProvider: React.FC<{ children: ReactNode }> = ({ children }) => 
         toastMessage,
         showToast,
         createEvent,
+        updateEvent,
         deleteEvent,
         toggleFollowEducator
       }}

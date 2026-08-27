@@ -218,36 +218,45 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
 
       {/* Author Header */}
       <div className="p-4 sm:p-6 pb-3">
-        <div className="flex items-center justify-between gap-3">
-          <div
-            onClick={() => navigate(`/profile/${activity.author.id}`)}
-            className="flex items-center gap-3 cursor-pointer group"
-          >
-            <img
-              src={activity.author.name?.toLowerCase().includes('jayamurugan')
-                ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
-                : (isAuthor ? currentUser.avatar : activity.author.avatar)}
-              alt={activity.author.name}
-              referrerPolicy="no-referrer"
-              className="w-11 h-11 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-indigo-400 transition-all bg-slate-100"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.onerror = null;
-                target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(activity.author.name || 'User')}&background=random&color=fff&size=100`;
-              }}
-            />
-            <div>
-              <div className="flex items-center gap-1.5">
-                <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
-                  {activity.author.name}
-                </h4>
-                <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+        {(() => {
+          const authorName = activity.author?.name && activity.author.name !== 'User Not Found' ? activity.author.name : 'THENAM Campus Student';
+          const authorHeadline = activity.author?.headline || 'Verified Campus Scholar';
+          const authorCollege = activity.author?.college || 'THENAM Ecosystem';
+          const avatarSrc = authorName.toLowerCase().includes('jayamurugan')
+            ? 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg'
+            : (isAuthor ? currentUser.avatar : (activity.author?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100`));
+
+          return (
+            <div className="flex items-center justify-between gap-3">
+              <div
+                onClick={() => activity.author?.id && navigate(`/profile/${activity.author.id}`)}
+                className="flex items-center gap-3 cursor-pointer group"
+              >
+                <img
+                  src={avatarSrc}
+                  alt={authorName}
+                  referrerPolicy="no-referrer"
+                  className="w-11 h-11 rounded-full object-cover border border-slate-200 group-hover:ring-2 group-hover:ring-indigo-400 transition-all bg-slate-100"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.onerror = null;
+                    target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(authorName)}&background=random&color=fff&size=100`;
+                  }}
+                />
+                <div>
+                  <div className="flex items-center gap-1.5">
+                    <h4 className="text-sm font-bold text-slate-900 group-hover:text-indigo-600 transition-colors">
+                      {authorName}
+                    </h4>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-indigo-600" />
+                  </div>
+                  <p className="text-xs text-slate-500">{authorHeadline}</p>
+                  <p className="text-[11px] text-slate-400 font-medium">{authorCollege}</p>
+                </div>
               </div>
-              <p className="text-xs text-slate-500">{activity.author.headline}</p>
-              <p className="text-[11px] text-slate-400 font-medium">{activity.author.college}</p>
             </div>
-          </div>
-        </div>
+          );
+        })()}
 
         {/* Activity Content */}
         <div className="mt-4 space-y-2">

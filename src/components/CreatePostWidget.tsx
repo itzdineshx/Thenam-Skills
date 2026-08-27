@@ -14,7 +14,7 @@ import {
   Plus
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { storageService } from '../firebase/storage';
+
 import { auth } from '../firebase/config';
 import { ActivityType } from '../types';
 import { cleanPostContent } from '../utils/textCleaner';
@@ -90,17 +90,28 @@ export const CreatePostWidget: React.FC = () => {
     // Add to state immediately
     setImages(prev => [...prev, ...newImages]);
     
-    // Start background upload for authenticated Firebase users
-    if (auth.currentUser) {
-      newImages.forEach(async (imgObj) => {
-        try {
-          const url = await storageService.uploadPostImage(currentUser.id, imgObj.file, Date.now());
-          setImages(prev => prev.map(img => img.preview === imgObj.preview ? { ...img, uploadedUrl: url } : img));
-        } catch {
-          // Silently fallback
+    // Start background upload to ImgBB
+    newImages.forEach(async (imgObj) => {
+      try {
+        const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+        if (!apiKey) return;
+        
+        const formData = new FormData();
+        formData.append('image', imgObj.file);
+
+        const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+          method: 'POST',
+          body: formData,
+        });
+        
+        const data = await response.json();
+        if (data.success) {
+          setImages(prev => prev.map(img => img.preview === imgObj.preview ? { ...img, uploadedUrl: data.data.url } : img));
         }
-      });
-    }
+      } catch (err) {
+        console.error('Background upload failed:', err);
+      }
+    });
     
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -116,26 +127,7 @@ export const CreatePostWidget: React.FC = () => {
     });
   };
 
-  const uploadWithFastFallback = async (img: {file: File, preview: string, uploadedUrl?: string}, index: number): Promise<string> => {
-    // If already uploaded in background, return URL instantly
-    if (img.uploadedUrl) return img.uploadedUrl;
-    
-    // Only attempt storage if Firebase user is authenticated
-    if (auth.currentUser) {
-      try {
-        return await storageService.uploadPostImage(currentUser.id, img.file, index);
-      } catch {
-        // Fallback to Data URL
-      }
-    }
 
-    // Immediate Data URL fallback
-    return new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(reader.result as string);
-      reader.readAsDataURL(img.file);
-    });
-  };
 
   const fileToDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve) => {
@@ -158,19 +150,32 @@ export const CreatePostWidget: React.FC = () => {
       const currentSkillTag = skillTag.trim();
       const currentPostType = postType;
 
-      // Upload images to cloud first to prevent 1MB Firestore limit issues with base64
+      // Upload images to ImgBB
       const cloudImageUrls: string[] = await Promise.all(
         currentImages.map(async (img, idx) => {
           if (img.uploadedUrl) return img.uploadedUrl;
-          if (auth.currentUser) {
-            try {
-              return await storageService.uploadPostImage(currentUser.id, img.file, Date.now() + idx);
-            } catch (err) {
-              console.warn('Cloud upload failed, falling back to base64', err);
-              return await fileToDataUrl(img.file);
+          
+          try {
+            const apiKey = import.meta.env.VITE_IMGBB_API_KEY;
+            if (!apiKey) throw new Error('No API key');
+            
+            const formData = new FormData();
+            formData.append('image', img.file);
+
+            const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+              method: 'POST',
+              body: formData,
+            });
+            const data = await response.json();
+            
+            if (data.success) {
+              return data.data.url;
             }
+            throw new Error('Upload failed');
+          } catch (err) {
+            console.warn('ImgBB upload failed, falling back to base64', err);
+            return await fileToDataUrl(img.file);
           }
-          return await fileToDataUrl(img.file);
         })
       );
 
