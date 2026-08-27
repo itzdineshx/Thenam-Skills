@@ -33,6 +33,7 @@ import { AdminPage } from './pages/AdminPage';
 import { OpeningSoonPage } from './pages/OpeningSoonPage';
 
 import { ShieldCheck } from 'lucide-react';
+import { EducatorFAB } from './components/EducatorFAB';
 
 const AppContent: React.FC = () => {
   const { currentPath, navigate } = useRouter();
@@ -169,6 +170,7 @@ const AppContent: React.FC = () => {
       {/* Global Modals & Notifications */}
       <AutomationCelebrationModal />
       <Toast />
+      <EducatorFAB />
 
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 mt-auto py-8 text-xs text-slate-500">

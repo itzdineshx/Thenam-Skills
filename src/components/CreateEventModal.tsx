@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { X, Calendar, Clock, MapPin, Users, Image as ImageIcon, Briefcase, Award, Loader2, Plus, Trash2, Video, Link as LinkIcon } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, Users, Image as ImageIcon, Briefcase, Award, Loader2, Plus, Trash2, Video, Link as LinkIcon, Search, ChevronDown, UserCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Module, EventItem } from '../types';
 import { getYouTubeEmbedData } from '../utils/youtube';
 import { storageService } from '../firebase/storage';
+import { api } from '../services/api';
 import { useEffect } from 'react';
 
 interface CreateEventModalProps {
@@ -17,6 +18,64 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
   const [loading, setLoading] = useState(false);
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
   const [coverImagePreview, setCoverImagePreview] = useState<string>('');
+
+  // Presenter/Speaker selection
+  const [availableEducators, setAvailableEducators] = useState<any[]>([]);
+  const [isLoadingEducators, setIsLoadingEducators] = useState(false);
+  const [speakerSearchQuery, setSpeakerSearchQuery] = useState('');
+  const [isSpeakerDropdownOpen, setIsSpeakerDropdownOpen] = useState(false);
+  const [selectedSpeaker, setSelectedSpeaker] = useState<{
+    name: string;
+    role: string;
+    company: string;
+    avatar: string;
+  } | null>(null);
+
+  // Fetch educators for presenter selection
+  useEffect(() => {
+    if (!isOpen) return;
+    const fetchEducators = async () => {
+      setIsLoadingEducators(true);
+      try {
+        const res = await api.get('/admin/users');
+        const data = res.data?.data || res.data || [];
+        setAvailableEducators(data.filter((u: any) => u.profileCompleted));
+      } catch (err) {
+        console.error('Failed to fetch educators:', err);
+        // Fallback: just use current user
+        setAvailableEducators([]);
+      } finally {
+        setIsLoadingEducators(false);
+      }
+    };
+    fetchEducators();
+  }, [isOpen]);
+
+  // Set default speaker to current user
+  useEffect(() => {
+    if (isOpen && !selectedSpeaker && currentUser) {
+      setSelectedSpeaker({
+        name: currentUser.name,
+        role: currentUser.headline || '',
+        company: currentUser.college || '',
+        avatar: currentUser.avatar || ''
+      });
+    }
+    if (isOpen && eventToEdit) {
+      setSelectedSpeaker({
+        name: eventToEdit.speaker.name,
+        role: eventToEdit.speaker.role,
+        company: eventToEdit.speaker.company,
+        avatar: eventToEdit.speaker.avatar
+      });
+    }
+  }, [isOpen, eventToEdit, currentUser]);
+
+  const filteredEducators = availableEducators.filter(u =>
+    u.name?.toLowerCase().includes(speakerSearchQuery.toLowerCase()) ||
+    u.headline?.toLowerCase().includes(speakerSearchQuery.toLowerCase()) ||
+    u.college?.toLowerCase().includes(speakerSearchQuery.toLowerCase())
+  );
 
   const [formData, setFormData] = useState({
     title: '',
@@ -166,11 +225,19 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
       };
 
       if (eventToEdit) {
-        await updateEvent(eventToEdit.id, eventPayload);
+        await updateEvent(eventToEdit.id, {
+          ...eventPayload,
+          speaker: selectedSpeaker || {
+            name: currentUser.name,
+            role: currentUser.headline,
+            company: currentUser.college,
+            avatar: currentUser.avatar
+          }
+        });
       } else {
         await createEvent({
           ...eventPayload,
-          speaker: {
+          speaker: selectedSpeaker || {
             name: currentUser.name,
             role: currentUser.headline,
             company: currentUser.college,
@@ -351,6 +418,97 @@ export const CreateEventModal: React.FC<CreateEventModalProps> = ({ isOpen, onCl
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Presenter / Speaker Selection */}
+              <div className="border-t border-slate-100 pt-5">
+                <label className="block text-xs font-bold text-slate-700 mb-2 flex items-center gap-1.5">
+                  <UserCheck className="w-4 h-4 text-indigo-500" />
+                  <span>Presenter / Speaker</span>
+                </label>
+
+                {/* Selected speaker preview */}
+                {selectedSpeaker && (
+                  <div className="flex items-center gap-3 p-3 bg-indigo-50/50 rounded-xl border border-indigo-200/50 mb-3">
+                    <img
+                      src={selectedSpeaker.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(selectedSpeaker.name)}&background=random&color=fff&size=80`}
+                      alt={selectedSpeaker.name}
+                      className="w-10 h-10 rounded-full object-cover border-2 border-white shadow-sm"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-bold text-slate-900 truncate">{selectedSpeaker.name}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{selectedSpeaker.role} {selectedSpeaker.company ? `- ${selectedSpeaker.company}` : ''}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsSpeakerDropdownOpen(!isSpeakerDropdownOpen)}
+                      className="text-xs font-bold text-indigo-600 hover:text-indigo-800 px-3 py-1.5 rounded-lg bg-white border border-indigo-200 hover:bg-indigo-50 transition-colors"
+                    >
+                      Change
+                    </button>
+                  </div>
+                )}
+
+                {/* Searchable presenter dropdown */}
+                {(isSpeakerDropdownOpen || !selectedSpeaker) && (
+                  <div className="border border-slate-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                    <div className="relative">
+                      <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+                      <input
+                        type="text"
+                        placeholder="Search educators by name..."
+                        value={speakerSearchQuery}
+                        onChange={(e) => setSpeakerSearchQuery(e.target.value)}
+                        className="w-full pl-9 pr-3 py-2.5 text-sm bg-slate-50 border-b border-slate-200 focus:bg-white outline-hidden"
+                      />
+                    </div>
+                    <div className="max-h-48 overflow-y-auto">
+                      {isLoadingEducators ? (
+                        <div className="p-4 text-center flex items-center justify-center gap-2 text-slate-500 text-xs">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading educators...
+                        </div>
+                      ) : filteredEducators.length === 0 ? (
+                        <div className="p-4 text-center text-slate-400 text-xs">
+                          No educators found{speakerSearchQuery ? ` for "${speakerSearchQuery}"` : ''}
+                        </div>
+                      ) : (
+                        filteredEducators.map((edu) => (
+                          <button
+                            key={edu.uid || edu.id}
+                            type="button"
+                            onClick={() => {
+                              setSelectedSpeaker({
+                                name: edu.name || edu.displayName || 'Educator',
+                                role: edu.headline || edu.role || 'Educator',
+                                company: edu.college || edu.organization || '',
+                                avatar: edu.avatar || edu.photoURL || ''
+                              });
+                              setIsSpeakerDropdownOpen(false);
+                              setSpeakerSearchQuery('');
+                            }}
+                            className={`w-full flex items-center gap-3 p-3 hover:bg-indigo-50/50 transition-colors text-left border-b border-slate-100/50 last:border-b-0 ${
+                              selectedSpeaker?.name === (edu.name || edu.displayName) ? 'bg-indigo-50/70' : ''
+                            }`}
+                          >
+                            <img
+                              src={edu.avatar || edu.photoURL || `https://ui-avatars.com/api/?name=${encodeURIComponent(edu.name || 'E')}&background=random&color=fff&size=80`}
+                              alt={edu.name}
+                              className="w-9 h-9 rounded-full object-cover border border-slate-200 shrink-0"
+                            />
+                            <div className="flex-1 min-w-0">
+                              <p className="text-xs font-bold text-slate-900 truncate">{edu.name || edu.displayName}</p>
+                              <p className="text-[10px] text-slate-500 truncate">{edu.headline || edu.role || 'Educator'} {edu.college ? `- ${edu.college}` : ''}</p>
+                            </div>
+                            {selectedSpeaker?.name === (edu.name || edu.displayName) && (
+                              <span className="text-[9px] font-black uppercase text-indigo-600 bg-indigo-100 px-2 py-0.5 rounded-md">Selected</span>
+                            )}
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {formData.mode === 'live_scheduled' && (
