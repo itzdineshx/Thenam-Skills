@@ -41,6 +41,7 @@ import { StudentProfileForm } from '../components/StudentProfileForm';
 import { LearningActivityCard } from '../components/LearningActivityCard';
 import { CreatePostWidget } from '../components/CreatePostWidget';
 import { uploadProfileImage, uploadEducatorAvatar, storageService } from '../firebase/storage';
+import { CVExportModal } from '../components/cv/CVExportModal';
 
 export const ProfilePage: React.FC = () => {
   const { currentUser, updateCurrentUser, addSkillToProfile, removeSkillFromProfile, certificates, projects, activities, events, showToast } = useApp();
@@ -167,6 +168,7 @@ export const ProfilePage: React.FC = () => {
   const [isSocialModalOpen, setIsSocialModalOpen] = useState(false);
   const [socialModalType, setSocialModalType] = useState<'linkedin' | 'github'>('linkedin');
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isCVModalOpen, setIsCVModalOpen] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
 
   const handleSaveBio = () => {
@@ -328,7 +330,7 @@ export const ProfilePage: React.FC = () => {
               <span>Share</span>
             </button>
             <button
-              onClick={() => showToast('Student Resume (PDF) generated from verified record!')}
+              onClick={() => setIsCVModalOpen(true)}
               className="px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer"
             >
               <Download className="w-3.5 h-3.5" />
@@ -1066,6 +1068,14 @@ export const ProfilePage: React.FC = () => {
           </div>
         </div>
       )}
+      {/* CV Export Modal */}
+      <CVExportModal
+        isOpen={isCVModalOpen}
+        onClose={() => setIsCVModalOpen(false)}
+        profile={profile}
+        certificates={isOwnProfile ? certificates : (profile.certificates || [])}
+        projects={isOwnProfile ? projects : (profile.projects || [])}
+      />
     </div>
   );
 };

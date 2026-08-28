@@ -77,7 +77,8 @@ export const createProfile = asyncHandler(async (req: AuthenticatedRequest, res:
     linkedinURL,
     githubURL,
     photoURL,
-    coverImage
+    coverImage,
+    bio
   } = req.body;
 
   // Verify all selected skills exist and are active in Firestore
@@ -105,6 +106,7 @@ export const createProfile = asyncHandler(async (req: AuthenticatedRequest, res:
     collegeLocation: collegeLocation || { city: '', state: '', country: '' },
     linkedinURL: linkedinURL || null,
     githubURL: githubURL || null,
+    bio: bio || '',
     profileCompleted: true,
     isOnboardingCompleted: true,
     updatedAt: admin.firestore.Timestamp.now()
@@ -146,7 +148,8 @@ export const updateProfile = asyncHandler(async (req: AuthenticatedRequest, res:
     linkedinURL,
     githubURL,
     photoURL,
-    coverImage
+    coverImage,
+    bio
   } = req.body;
 
   const db = admin.firestore();
@@ -181,6 +184,7 @@ export const updateProfile = asyncHandler(async (req: AuthenticatedRequest, res:
   if (githubURL !== undefined) updates.githubURL = githubURL || null;
   if (photoURL) updates.photoURL = photoURL;
   if (coverImage) updates.coverImage = coverImage;
+  if (bio !== undefined) updates.bio = bio;
 
   await userRef.update(updates);
   const finalDoc = await userRef.get();
@@ -222,6 +226,7 @@ export const getPublicProfile = asyncHandler(async (req: AuthenticatedRequest, r
   const publicProfile = {
     id: firebaseUid,
     name: student.name,
+    bio: student.bio || '',
     photoURL: student.photoURL || '',
     avatar: student.photoURL || '',
     department: student.department || '',
