@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAnalytics } from "firebase/analytics";
-import { getAuth, GoogleAuthProvider } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, setPersistence, browserLocalPersistence } from "firebase/auth";
 import { getFirestore, initializeFirestore, persistentLocalCache, persistentSingleTabManager } from "firebase/firestore";
 import { getStorage } from "firebase/storage";
 
@@ -17,6 +17,11 @@ export const firebaseConfig = {
 export const app = initializeApp(firebaseConfig);
 export const analytics = typeof window !== 'undefined' ? getAnalytics(app) : null;
 export const auth = getAuth(app);
+
+// Use browserLocalPersistence to prevent IndexedDB closing/lock issues during popup auth
+setPersistence(auth, browserLocalPersistence).catch((err) => {
+  console.warn('Could not set browserLocalPersistence on Firebase auth:', err);
+});
 
 // Use persistentSingleTabManager to prevent multi-tab IndexedDB lock conflicts
 // and "The database is closing/hidden" errors when Google OAuth popup opens/closes.
