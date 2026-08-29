@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <script>
       (function() {
-        if (window.location.hostname === 'thenam-connect.vercel.app') {
+        var host = window.location.hostname;
+        if (host.indexOf('vercel.app') !== -1 && host !== 'campus.thenamsoftwaresolutions.com') {
           window.location.replace('https://campus.thenamsoftwaresolutions.com' + window.location.pathname + window.location.search + window.location.hash);
         }
       })();
