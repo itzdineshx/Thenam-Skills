@@ -1,5 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { User, onAuthStateChanged, signOut as firebaseSignOut, signInWithPopup } from 'firebase/auth';
+import { 
+  User, 
+  onAuthStateChanged, 
+  signOut as firebaseSignOut, 
+  signInWithPopup, 
+  signInWithRedirect, 
+  getRedirectResult, 
+  setPersistence, 
+  browserLocalPersistence 
+} from 'firebase/auth';
 import { auth, googleProvider } from '../firebase/config';
 import { StudentProfile } from '../types';
 import { api } from '../services/api';
@@ -70,6 +79,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
+    // Check if user returned from Google signInWithRedirect
+    getRedirectResult(auth).catch((err) => {
+      console.warn('Redirect sign-in result check:', err);
+    });
+
     const mockUser = localStorage.getItem('mockEducator_v2');
     if (mockUser) {
       setCurrentUserProfile(JSON.parse(mockUser));
@@ -138,10 +152,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const signInWithGoogle = async () => {
     try {
+      await setPersistence(auth, browserLocalPersistence).catch(() => {});
       await signInWithPopup(auth, googleProvider);
-    } catch (error) {
-      console.error('Failed to sign in with Google:', error);
-      throw error;
+    } catch (error: any) {
+      console.warn('signInWithPopup failed or was blocked, falling back to signInWithRedirect:', error);
+      if (
+        error?.code === 'auth/popup-blocked' ||
+        error?.code === 'auth/popup-closed-by-user' ||
+        error?.code === 'auth/cancelled-popup-request' ||
+        error?.message?.includes('Database is closing') ||
+        error?.message?.includes('Cross-Origin-Opener-Policy')
+      ) {
+        await signInWithRedirect(auth, googleProvider);
+      } else {
+        throw error;
+      }
     }
   };
 

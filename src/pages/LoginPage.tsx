@@ -1,18 +1,18 @@
 import React, { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '../firebase/config';
+import { useAuth } from '../context/AuthContext';
 import { AlertCircle, Loader2, Sparkles, ShieldCheck, GraduationCap } from 'lucide-react';
 
 export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const { signInWithGoogle } = useAuth();
 
   const handleGoogleLogin = async () => {
     setError('');
     setLoading(true);
     try {
       localStorage.setItem('intendedRole', 'student');
-      await signInWithPopup(auth, googleProvider);
+      await signInWithGoogle();
       console.log('Logged in with Google successfully');
     } catch (err: any) {
       console.error('Google Auth error:', err);
