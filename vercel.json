@@ -5,6 +5,17 @@
       "has": [
         {
           "type": "host",
+          "value": "thenam-campus.vercel.app"
+        }
+      ],
+      "destination": "https://campus.thenamsoftwaresolutions.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
           "value": "thenam-connect.vercel.app"
         }
       ],
