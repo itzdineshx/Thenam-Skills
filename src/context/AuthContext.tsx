@@ -19,10 +19,10 @@ interface AuthContextType {
   currentUserProfile: StudentProfile | null;
   loading: boolean;
   signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
   signOut: () => Promise<void>;
   logout: () => Promise<void>;
   refreshProfile: () => Promise<void>;
-  mockEducatorLogin: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -31,10 +31,10 @@ const AuthContext = createContext<AuthContextType>({
   currentUserProfile: null,
   loading: true,
   signInWithGoogle: async () => {},
+  signInWithEmail: async () => {},
   signOut: async () => {},
   logout: async () => {},
   refreshProfile: async () => {},
-  mockEducatorLogin: () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -44,40 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [currentUserProfile, setCurrentUserProfile] = useState<StudentProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // New mock login function
-  const mockEducatorLogin = () => {
-    const mockProfile: StudentProfile = {
-      id: 'mock_educator_jayamurugan',
-      name: 'Jayamurugan',
-      headline: 'Senior Educator & AI Specialist',
-      college: 'THENAM Campus',
-      department: 'Computer Science',
-      yearOfStudy: 'Faculty',
-      location: 'Chennai, India',
-      avatar: 'https://cdn.phototourl.com/free/2026-08-26-5659434f-46e0-4faa-8391-72dfeefaa208.jpg',
-      coverImage: '',
-      bio: 'Educator shaping the future of AI.',
-      email: 'jayamurugan@thenam.edu',
-      skills: ['Machine Learning', 'AI', 'Mentorship'],
-      interests: [],
-      metrics: {
-        coursesCompleted: 0,
-        certificatesCount: 0,
-        projectsCount: 0,
-        networkCount: 0,
-        xpPoints: 0,
-        streakDays: 0,
-        globalRank: 1
-      },
-      journey: [],
-      role: 'faculty',
-      profileCompleted: true,
-      isOnboardingCompleted: true
-    };
-    localStorage.setItem('mockEducator_v2', JSON.stringify(mockProfile));
-    setCurrentUserProfile(mockProfile);
-  };
-
+  // Clean up any old mock state on mount
   useEffect(() => {
     // Check if user returned from Google signInWithRedirect
     getRedirectResult(auth).catch((err) => {
@@ -170,6 +137,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const signInWithEmail = async (email: string, pass: string) => {
+    try {
+      await signInWithEmailAndPassword(auth, email, pass);
+    } catch (error) {
+      console.error('Failed to sign in with Email:', error);
+      throw error;
+    }
+  };
+
   const handleSignOut = async () => {
     localStorage.removeItem('mockEducator');
     localStorage.removeItem('mockEducator_v2');
@@ -229,10 +205,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         currentUserProfile,
         loading,
         signInWithGoogle,
+        signInWithEmail,
         signOut: handleSignOut,
         logout: handleSignOut,
-        refreshProfile,
-        mockEducatorLogin
+        refreshProfile
       }}
     >
       {children}

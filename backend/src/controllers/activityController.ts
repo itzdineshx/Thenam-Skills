@@ -39,6 +39,9 @@ export const getActivities = asyncHandler(async (req: Request, res: Response) =>
           firebaseUid: doc.id,
           name: d.name || 'Google User',
           photoURL: d.photoURL || '',
+          avatar: d.avatar || '',
+          headline: d.headline || '',
+          college: d.college || '',
           department: d.department || '',
           year: d.year || '',
           collegeName: d.collegeName || ''
@@ -217,8 +220,8 @@ export const commentActivity = asyncHandler(async (req: any, res: Response) => {
     timestamp: new Date().toISOString(),
     author: {
       name: userData.name || 'Google User',
-      avatar: userData.photoURL || '',
-      headline: userData.department || ''
+      avatar: userData.avatar || userData.photoURL || '',
+      headline: userData.headline || userData.department || ''
     }
   };
 
