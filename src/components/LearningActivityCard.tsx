@@ -412,7 +412,7 @@ export const LearningActivityCard: React.FC<LearningActivityCardProps> = ({ acti
               <div className="truncate">
                 <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-wider block">Attached Link</span>
                 <a
-                  href={activity.metadata.externalUrl}
+                  href={activity.metadata.externalUrl.startsWith('http://') || activity.metadata.externalUrl.startsWith('https://') ? activity.metadata.externalUrl : `https://${activity.metadata.externalUrl}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-bold text-slate-900 group-hover:text-indigo-600 truncate block"
